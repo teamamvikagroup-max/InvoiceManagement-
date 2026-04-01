@@ -133,3 +133,26 @@ Before using the app end to end, confirm all of these are true:
 - Your Realtime Database URL is copied exactly into `VITE_FIREBASE_DATABASE_URL`.
 - Your Storage bucket value is copied exactly into `VITE_FIREBASE_STORAGE_BUCKET`.
 - Development rules are deployed or pasted into the console.
+
+## Vercel deployment
+
+This project is ready for Vercel with `vercel.json` configured for a Vite single-page app.
+
+Recommended Vercel settings:
+- Framework preset: `Vite`
+- Build command: `npm run build`
+- Output directory: `dist`
+
+Required environment variables in Vercel:
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_DATABASE_URL`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `VITE_FIREBASE_APP_ID`
+
+Use the exact Realtime Database URL from Firebase Console. For this project it should be:
+- `https://amvikagroupinvoicewebapp-default-rtdb.asia-southeast1.firebasedatabase.app`
+
+After adding environment variables in Vercel, trigger a fresh redeploy.
