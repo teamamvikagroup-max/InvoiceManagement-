@@ -63,7 +63,7 @@ export default function ItemsTable({ items, onChange, onAddItem, onRemoveItem })
                   <input
                     required
                     type="number"
-                    min="0"
+                    min="0.01"
                     step="0.01"
                     value={item.rate}
                     onChange={(event) => itemChange(index, "rate", event.target.value)}

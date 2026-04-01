@@ -86,7 +86,10 @@ export default function DocumentForm({ type, companies }) {
     if (!formData.companyId) return "Please select a company profile.";
     if (!formData.dueDate) return "Please choose a due date.";
     if (!formData.customer.name.trim() || !formData.customer.address.trim()) return "Customer name and address are required.";
-    if (!preparedItems.length || preparedItems.some((item) => !item.description.trim() || item.quantity <= 0 || item.rate < 0)) return "Add at least one valid item with positive quantity and rate.";
+    if (!preparedItems.length || preparedItems.some((item) => !item.description.trim() || item.quantity <= 0 || item.rate <= 0 || item.total <= 0)) {
+      return "Add at least one valid item with description, quantity, and amount greater than zero.";
+    }
+    if (totals.subtotal <= 0 || totals.totalAmount <= 0) return "Total amount must be greater than zero before generating the PDF.";
     if (type === "invoice" && totals.paymentMade < 0) return "Payment made cannot be negative.";
     if (type === "invoice" && totals.paymentMade > totals.totalAmount) return "Payment made cannot exceed the total amount.";
     return null;
