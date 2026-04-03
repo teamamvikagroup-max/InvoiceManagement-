@@ -39,7 +39,7 @@ export default function CompanyFormModal({ isOpen, company, onClose, onSubmit, i
             <input type="file" accept="image/*" className="input-field file:mr-4 file:rounded-xl file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:font-semibold file:text-brand-700" onChange={(event) => setLogoFile(event.target.files?.[0] ?? null)} />
             {company?.logoUrl ? <div className="mt-4 flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4"><img src={company.logoUrl} alt={company.name} className="h-16 w-16 rounded-2xl object-cover" /><p className="text-sm text-slate-600">Current logo will remain until you upload a replacement.</p></div> : null}
           </div>
-          <div className="md:col-span-2 flex justify-end gap-3"><button type="button" className="btn-secondary" onClick={onClose}>Cancel</button><button type="submit" className="btn-primary" disabled={isSubmitting}>{isSubmitting ? "Saving..." : company ? "Update Company" : "Save Company"}</button></div>
+          <div className="md:col-span-2 flex justify-end gap-3"><button type="button" className="btn-secondary" onClick={onClose}>Cancel</button><button type="submit" className="btn-primary" disabled={isSubmitting}>{isSubmitting ? "Saving..." : company ? "Update & Close" : "Save Company"}</button></div>
         </form>
       </div>
     </div>

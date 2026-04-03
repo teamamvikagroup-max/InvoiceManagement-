@@ -85,35 +85,64 @@ export default function CompanyProfilePage() {
     setIsSubmitting(true);
     setStatus(null);
 
+    const activeCompany = selectedCompany;
+
     try {
       let logoPayload = {};
       if (logoFile) {
         logoPayload = await uploadCompanyLogo(logoFile, values.name);
       }
 
-      if (selectedCompany) {
-        if (logoFile && selectedCompany.logoPath) {
-          await deleteStorageFile(selectedCompany.logoPath);
-        }
-
-        await updateCompany(selectedCompany.id, {
+      if (activeCompany) {
+        const nextCompanyPayload = {
           ...values,
           ...(logoPayload.logoUrl
             ? logoPayload
-            : { logoUrl: selectedCompany.logoUrl ?? "", logoPath: selectedCompany.logoPath ?? "" }),
-        });
+            : { logoUrl: activeCompany.logoUrl ?? "", logoPath: activeCompany.logoPath ?? "" }),
+        };
+
+        await updateCompany(activeCompany.id, nextCompanyPayload);
+
+        setCompanies((current) =>
+          current.map((company) =>
+            company.id === activeCompany.id
+              ? {
+                  ...company,
+                  ...nextCompanyPayload,
+                  updatedAt: Date.now(),
+                }
+              : company,
+          ),
+        );
+
+        if (logoFile && activeCompany.logoPath) {
+          await deleteStorageFile(activeCompany.logoPath);
+        }
       } else {
-        await createCompany({
+        const createdCompany = await createCompany({
           ...values,
           logoUrl: logoPayload.logoUrl ?? "",
           logoPath: logoPayload.logoPath ?? "",
         });
+
+        setCompanies((current) => [
+          {
+            id: createdCompany.id,
+            ...values,
+            logoUrl: logoPayload.logoUrl ?? "",
+            logoPath: logoPayload.logoPath ?? "",
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          },
+          ...current,
+        ]);
       }
 
-      setStatus({ type: "success", message: selectedCompany ? "Company updated successfully." : "Company created successfully." });
+      setStatus({ type: "success", message: activeCompany ? "Company updated successfully." : "Company created successfully." });
       setIsModalOpen(false);
       setSelectedCompany(null);
     } catch (error) {
+      console.error("Company save failed", error);
       setStatus({ type: "error", message: getCompanyErrorMessage(error, Boolean(logoFile)) });
     } finally {
       setIsSubmitting(false);
