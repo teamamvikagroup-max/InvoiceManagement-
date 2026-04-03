@@ -63,7 +63,6 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
     <div style={styles.page}>
       <div style={{ ...styles.row, borderBottom: "1px solid #cbd5e1", paddingBottom: "18px" }}>
         <div style={{ maxWidth: "420px" }}>
-          {company?.logoUrl ? <img src={company.logoUrl} alt={company.name} style={{ height: "54px", width: "54px", objectFit: "contain", marginBottom: "10px" }} crossOrigin="anonymous" /> : null}
           <div style={{ fontSize: "28px", fontWeight: 700 }}>{company?.name || "Company Name"}</div>
           <div style={{ marginTop: "8px", whiteSpace: "pre-line", color: "#475569" }}>{company?.address || "-"}</div>
           <div style={{ marginTop: "8px", color: "#475569" }}>GSTIN: {company?.gstin || "-"}</div>
@@ -71,13 +70,21 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
           <div style={{ color: "#475569" }}>Email: {company?.email || "-"}</div>
           <div style={{ color: "#475569" }}>Website: {company?.website ? formatWebsite(company.website) : "-"}</div>
         </div>
-        <div style={styles.titleBox}>
-          <div style={{ fontSize: "11px", letterSpacing: "0.14em", textTransform: "uppercase", color: "#4338ca", fontWeight: 700 }}>
-            {type === "invoice" ? "Tax Invoice" : "Quotation"}
+
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "12px" }}>
+          {company?.logoUrl ? (
+            <div style={{ border: "1px solid #dbe4ff", borderRadius: "12px", padding: "10px", backgroundColor: "#ffffff" }}>
+              <img src={company.logoUrl} alt={company.name} style={{ height: "60px", width: "60px", objectFit: "contain" }} crossOrigin="anonymous" />
+            </div>
+          ) : null}
+          <div style={styles.titleBox}>
+            <div style={{ fontSize: "11px", letterSpacing: "0.14em", textTransform: "uppercase", color: "#4338ca", fontWeight: 700 }}>
+              {type === "invoice" ? "Tax Invoice" : "Quotation"}
+            </div>
+            <div style={{ fontSize: "24px", fontWeight: 700, marginTop: "8px" }}>{invoiceNumber}</div>
+            <div style={{ marginTop: "10px", color: "#334155" }}>Due Date: {formatDate(dueDate)}</div>
+            <div style={{ color: "#334155" }}>Tax Mode: {taxType === "igst" ? "IGST 18%" : "CGST 9% + SGST 9%"}</div>
           </div>
-          <div style={{ fontSize: "24px", fontWeight: 700, marginTop: "8px" }}>{invoiceNumber}</div>
-          <div style={{ marginTop: "10px", color: "#334155" }}>Due Date: {formatDate(dueDate)}</div>
-          <div style={{ color: "#334155" }}>Tax Mode: {taxType === "igst" ? "IGST 18%" : "CGST 9% + SGST 9%"}</div>
         </div>
       </div>
 
