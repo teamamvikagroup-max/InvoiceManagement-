@@ -45,7 +45,7 @@ export default function ItemsTable({ items, onChange, onAddItem, onRemoveItem })
                     value={item.hsnCode}
                     onChange={(event) => itemChange(index, "hsnCode", event.target.value)}
                     className="input-field"
-                    placeholder="HSN/SAC"
+                    placeholder="HSN/SAC (Optional)"
                   />
                 </td>
                 <td className="px-4 py-4">
