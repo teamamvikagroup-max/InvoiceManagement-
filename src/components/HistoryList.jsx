@@ -1,62 +1,10 @@
 import { useState } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
 import { formatCurrency } from "../utils/calculations";
 import { formatDate, formatTimestamp } from "../utils/formatters";
-import { generatePdfBlob } from "../utils/pdf";
+import { downloadHistoryPdf } from "../utils/historyDownloads";
 import EmptyState from "./EmptyState";
-import PdfDocument from "./PdfDocument";
 
 const STALLED_UPLOAD_MS = 60000;
-
-function downloadPdfBlob(pdfBlob, filename) {
-  const objectUrl = URL.createObjectURL(pdfBlob);
-  const link = document.createElement("a");
-  link.href = objectUrl;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-}
-
-async function downloadHistoryPdf(record, type) {
-  const container = document.createElement("div");
-  container.style.position = "fixed";
-  container.style.left = "-200vw";
-  container.style.top = "0";
-  container.style.opacity = "0";
-  container.innerHTML = renderToStaticMarkup(
-    <PdfDocument
-      type={type}
-      invoiceNumber={record.invoiceNumber}
-      dueDate={record.dueDate}
-      company={record.companySnapshot}
-      customer={record.customer}
-      items={record.items ?? []}
-      totals={{
-        subtotal: Number(record.subtotal ?? 0),
-        cgst: Number(record.cgst ?? 0),
-        sgst: Number(record.sgst ?? 0),
-        igst: Number(record.igst ?? 0),
-        totalAmount: Number(record.totalAmount ?? 0),
-        paymentMade: Number(record.paymentMade ?? 0),
-        balanceAmount: Number(record.balanceAmount ?? 0),
-      }}
-      notes={record.notes}
-      terms={record.terms}
-      taxType={record.taxType}
-    />,
-  );
-
-  document.body.appendChild(container);
-
-  try {
-    const pdfBlob = await generatePdfBlob(container.firstElementChild ?? container, `${record.invoiceNumber}.pdf`);
-    downloadPdfBlob(pdfBlob, `${record.invoiceNumber}.pdf`);
-  } finally {
-    container.remove();
-  }
-}
 
 function HistoryAction({ record, uploadLooksStalled, isDownloading, onDownload }) {
   if (record.pdfUrl) {
