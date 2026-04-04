@@ -30,6 +30,10 @@ function getCompanyErrorMessage(error, hasLogoFile = false) {
     return "Firebase Storage is not fully set up for this project. Enable Storage in Firebase Console and verify VITE_FIREBASE_STORAGE_BUCKET in your .env file.";
   }
 
+  if (hasLogoFile && message.toLowerCase().includes("logo upload timed out")) {
+    return "Logo upload took too long. Please try again with a smaller image or check Firebase Storage connectivity.";
+  }
+
   if (hasLogoFile && message.toLowerCase().includes("storage")) {
     return "Logo upload failed because Firebase Storage is not accessible. Check that Storage is enabled and its rules allow writes.";
   }

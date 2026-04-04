@@ -153,6 +153,10 @@ export async function uploadCompanyLogo(file, companyName) {
     file,
     { contentType: file.type || "application/octet-stream" },
     LOGO_UPLOAD_TIMEOUT_MS,
+    {
+      timeoutMessage: "Logo upload timed out. Please try again.",
+      progressLabel: "Company logo upload progress",
+    },
   );
 
   const logoUrl = await withTimeout(
@@ -254,19 +258,24 @@ function withTimeout(promise, timeoutMs, message) {
   });
 }
 
-function uploadBlobResumable(fileRef, blob, metadata, timeoutMs) {
+function uploadBlobResumable(fileRef, blob, metadata, timeoutMs, options = {}) {
+  const {
+    timeoutMessage = "Upload timed out.",
+    progressLabel = "Upload progress",
+  } = options;
+
   return new Promise((resolve, reject) => {
     const uploadTask = uploadBytesResumable(fileRef, blob, metadata);
     const timer = setTimeout(() => {
       uploadTask.cancel();
-      reject(new Error("PDF upload timed out. Falling back to local download."));
+      reject(new Error(timeoutMessage));
     }, timeoutMs);
 
     uploadTask.on(
       "state_changed",
       (snapshot) => {
         const progress = snapshot.totalBytes ? Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100) : 0;
-        console.info("PDF upload progress", progress);
+        console.info(progressLabel, progress);
       },
       (error) => {
         clearTimeout(timer);
@@ -285,7 +294,10 @@ export async function uploadDocumentPdf(invoiceNumber, blob) {
   const pdfPath = `invoices/${invoiceNumber}.pdf`;
   const pdfReference = storageRef(storage, pdfPath);
 
-  await uploadBlobResumable(pdfReference, blob, { contentType: "application/pdf" }, PDF_UPLOAD_TIMEOUT_MS);
+  await uploadBlobResumable(pdfReference, blob, { contentType: "application/pdf" }, PDF_UPLOAD_TIMEOUT_MS, {
+    timeoutMessage: "PDF upload timed out. Falling back to local download.",
+    progressLabel: "PDF upload progress",
+  });
 
   const pdfUrl = await withTimeout(
     getDownloadURL(pdfReference),
