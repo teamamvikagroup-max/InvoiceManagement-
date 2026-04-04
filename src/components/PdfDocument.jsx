@@ -1,5 +1,5 @@
 import { formatCurrency } from "../utils/calculations";
-import { formatDate, formatWebsite } from "../utils/formatters";
+import { formatAmountInWordsEnglish, formatAmountInWordsHindi, formatDate, formatWebsite } from "../utils/formatters";
 
 const styles = {
   page: {
@@ -8,8 +8,8 @@ const styles = {
     color: "#0f172a",
     fontFamily: "Arial, sans-serif",
     fontSize: "12px",
-    lineHeight: 1.35,
-    padding: "28px",
+    lineHeight: 1.4,
+    padding: "26px 28px 52px",
   },
   row: {
     display: "flex",
@@ -20,52 +20,89 @@ const styles = {
   section: {
     marginTop: "20px",
   },
+  label: {
+    fontSize: "11px",
+    letterSpacing: "0.14em",
+    textTransform: "uppercase",
+    color: "#64748b",
+    fontWeight: 700,
+  },
   titleBox: {
     border: "1px solid #dbe4ff",
-    backgroundColor: "#eef2ff",
-    borderRadius: "12px",
+    background: "linear-gradient(180deg, #eef2ff 0%, #e0e7ff 100%)",
+    borderRadius: "16px",
     padding: "14px 16px",
-    minWidth: "220px",
+    minWidth: "236px",
+    boxShadow: "0 10px 25px rgba(99, 102, 241, 0.08)",
   },
   table: {
     width: "100%",
     borderCollapse: "collapse",
-    marginTop: "10px",
+    marginTop: "12px",
+    borderRadius: "16px",
+    overflow: "hidden",
   },
   cell: {
     border: "1px solid #dbe4ff",
-    padding: "8px 10px",
+    padding: "9px 10px",
     textAlign: "left",
     verticalAlign: "top",
   },
   head: {
     backgroundColor: "#f8fafc",
     fontWeight: 700,
+    color: "#334155",
   },
   totals: {
-    width: "320px",
+    width: "340px",
     marginLeft: "auto",
     marginTop: "18px",
     border: "1px solid #dbe4ff",
-    borderRadius: "12px",
+    borderRadius: "16px",
     overflow: "hidden",
+    backgroundColor: "#f8fafc",
   },
   totalRow: {
     display: "flex",
     justifyContent: "space-between",
-    padding: "8px 12px",
+    padding: "9px 14px",
     borderBottom: "1px solid #e2e8f0",
+  },
+  wordsBox: {
+    marginTop: "16px",
+    border: "1px solid #dbe4ff",
+    borderRadius: "16px",
+    padding: "14px 16px",
+    backgroundColor: "#ffffff",
+  },
+  blankBox: {
+    marginTop: "14px",
+    minHeight: "92px",
+    border: "1px dashed #cbd5e1",
+    borderRadius: "16px",
+    backgroundColor: "#ffffff",
+  },
+  notesCard: {
+    width: "48%",
+    border: "1px solid #e2e8f0",
+    borderRadius: "16px",
+    padding: "14px 16px",
+    backgroundColor: "#ffffff",
+    minHeight: "120px",
   },
 };
 
 export default function PdfDocument({ type, invoiceNumber, dueDate, company, customer, items, totals, notes, terms, taxType }) {
+  const englishAmountInWords = formatAmountInWordsEnglish(totals.totalAmount);
+  const hindiAmountInWords = formatAmountInWordsHindi(totals.totalAmount);
+
   return (
     <div style={styles.page}>
       <div style={{ ...styles.row, borderBottom: "1px solid #cbd5e1", paddingBottom: "18px" }}>
-        <div style={{ maxWidth: "420px" }}>
+        <div style={{ maxWidth: "430px" }}>
           <div style={{ fontSize: "28px", fontWeight: 700 }}>{company?.name || "Company Name"}</div>
           <div style={{ marginTop: "8px", whiteSpace: "pre-line", color: "#475569" }}>{company?.address || "-"}</div>
-          <div style={{ marginTop: "8px", color: "#475569" }}>GSTIN: {company?.gstin || "-"}</div>
+          <div style={{ marginTop: "10px", color: "#475569" }}>GSTIN: {company?.gstin || "-"}</div>
           <div style={{ color: "#475569" }}>Phone: {company?.phone || "-"}</div>
           <div style={{ color: "#475569" }}>Email: {company?.email || "-"}</div>
           <div style={{ color: "#475569" }}>Website: {company?.website ? formatWebsite(company.website) : "-"}</div>
@@ -73,7 +110,7 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
 
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "12px" }}>
           {company?.logoUrl ? (
-            <div style={{ border: "1px solid #dbe4ff", borderRadius: "12px", padding: "10px", backgroundColor: "#ffffff" }}>
+            <div style={{ border: "1px solid #dbe4ff", borderRadius: "14px", padding: "10px", backgroundColor: "#ffffff" }}>
               <img src={company.logoUrl} alt={company.name} style={{ height: "60px", width: "60px", objectFit: "contain" }} crossOrigin="anonymous" />
             </div>
           ) : null}
@@ -89,7 +126,7 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
       </div>
 
       <div style={styles.section}>
-        <div style={{ fontSize: "11px", letterSpacing: "0.14em", textTransform: "uppercase", color: "#64748b", fontWeight: 700 }}>Bill To</div>
+        <div style={styles.label}>Bill To</div>
         <div style={{ fontSize: "20px", fontWeight: 700, marginTop: "8px" }}>{customer.name || "-"}</div>
         <div style={{ marginTop: "6px", whiteSpace: "pre-line", color: "#475569" }}>{customer.address || "-"}</div>
         <div style={{ marginTop: "8px", color: "#475569" }}>Phone: {customer.phone || "-"}</div>
@@ -105,9 +142,9 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
             <tr>
               <th style={{ ...styles.cell, ...styles.head }}>Description</th>
               <th style={{ ...styles.cell, ...styles.head }}>HSN Code</th>
-              <th style={{ ...styles.cell, ...styles.head }}>Qty</th>
-              <th style={{ ...styles.cell, ...styles.head }}>Rate</th>
-              <th style={{ ...styles.cell, ...styles.head }}>Amount</th>
+              <th style={{ ...styles.cell, ...styles.head, width: "68px" }}>Qty</th>
+              <th style={{ ...styles.cell, ...styles.head, width: "100px" }}>Rate</th>
+              <th style={{ ...styles.cell, ...styles.head, width: "118px" }}>Amount</th>
             </tr>
           </thead>
           <tbody>
@@ -138,13 +175,20 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
         ) : null}
       </div>
 
-      <div style={{ ...styles.row, marginTop: "22px", alignItems: "stretch" }}>
-        <div style={{ width: "48%" }}>
-          <div style={{ fontSize: "11px", letterSpacing: "0.14em", textTransform: "uppercase", color: "#64748b", fontWeight: 700 }}>Notes</div>
+      <div style={styles.wordsBox}>
+        <div style={styles.label}>Total In Words</div>
+        <div style={{ marginTop: "10px", fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>{englishAmountInWords}</div>
+        <div style={{ marginTop: "8px", fontSize: "13px", color: "#475569" }}>{hindiAmountInWords}</div>
+        <div style={styles.blankBox} />
+      </div>
+
+      <div style={{ ...styles.row, marginTop: "20px", alignItems: "stretch" }}>
+        <div style={styles.notesCard}>
+          <div style={styles.label}>Notes</div>
           <div style={{ marginTop: "8px", whiteSpace: "pre-line", color: "#475569" }}>{notes || "-"}</div>
         </div>
-        <div style={{ width: "48%" }}>
-          <div style={{ fontSize: "11px", letterSpacing: "0.14em", textTransform: "uppercase", color: "#64748b", fontWeight: 700 }}>Terms & Conditions</div>
+        <div style={styles.notesCard}>
+          <div style={styles.label}>Terms & Conditions</div>
           <div style={{ marginTop: "8px", whiteSpace: "pre-line", color: "#475569" }}>{terms || "-"}</div>
         </div>
       </div>
