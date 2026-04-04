@@ -1,14 +1,19 @@
 import { formatCurrency } from "../utils/calculations";
 import { formatAmountInWordsEnglish, formatAmountInWordsHindi, formatDate, formatWebsite } from "../utils/formatters";
 
+const avoidBreak = {
+  breakInside: "avoid",
+  pageBreakInside: "avoid",
+};
+
 const styles = {
   page: {
     width: "794px",
     backgroundColor: "#ffffff",
     color: "#0f172a",
-    fontFamily: "Arial, sans-serif",
+    fontFamily: '"Noto Sans", "Noto Sans Devanagari", Arial, sans-serif',
     fontSize: "12px",
-    lineHeight: 1.4,
+    lineHeight: 1.45,
     padding: "26px 28px 52px",
   },
   row: {
@@ -53,14 +58,37 @@ const styles = {
     fontWeight: 700,
     color: "#334155",
   },
+  summaryRow: {
+    ...avoidBreak,
+    display: "flex",
+    gap: "18px",
+    alignItems: "stretch",
+    marginTop: "20px",
+  },
+  wordsBox: {
+    ...avoidBreak,
+    flex: 1,
+    border: "1px solid #dbe4ff",
+    borderRadius: "16px",
+    padding: "14px 16px",
+    backgroundColor: "#ffffff",
+    minHeight: "100%",
+  },
+  blankBox: {
+    marginTop: "14px",
+    minHeight: "96px",
+    border: "1px dashed #cbd5e1",
+    borderRadius: "16px",
+    backgroundColor: "#ffffff",
+  },
   totals: {
+    ...avoidBreak,
     width: "340px",
-    marginLeft: "auto",
-    marginTop: "18px",
     border: "1px solid #dbe4ff",
     borderRadius: "16px",
     overflow: "hidden",
     backgroundColor: "#f8fafc",
+    flexShrink: 0,
   },
   totalRow: {
     display: "flex",
@@ -68,21 +96,16 @@ const styles = {
     padding: "9px 14px",
     borderBottom: "1px solid #e2e8f0",
   },
-  wordsBox: {
-    marginTop: "16px",
-    border: "1px solid #dbe4ff",
-    borderRadius: "16px",
-    padding: "14px 16px",
-    backgroundColor: "#ffffff",
-  },
-  blankBox: {
-    marginTop: "14px",
-    minHeight: "92px",
-    border: "1px dashed #cbd5e1",
-    borderRadius: "16px",
-    backgroundColor: "#ffffff",
+  notesRow: {
+    ...avoidBreak,
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "20px",
+    alignItems: "stretch",
+    marginTop: "20px",
   },
   notesCard: {
+    ...avoidBreak,
     width: "48%",
     border: "1px solid #e2e8f0",
     borderRadius: "16px",
@@ -108,7 +131,7 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
           <div style={{ color: "#475569" }}>Website: {company?.website ? formatWebsite(company.website) : "-"}</div>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "12px" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "12px", ...avoidBreak }}>
           {company?.logoUrl ? (
             <div style={{ border: "1px solid #dbe4ff", borderRadius: "14px", padding: "10px", backgroundColor: "#ffffff" }}>
               <img src={company.logoUrl} alt={company.name} style={{ height: "60px", width: "60px", objectFit: "contain" }} crossOrigin="anonymous" />
@@ -136,7 +159,7 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
         <div style={{ color: "#475569" }}>GSTIN: {customer.gstin || "-"}</div>
       </div>
 
-      <div style={styles.section}>
+      <div style={{ ...styles.section, ...avoidBreak }}>
         <table style={styles.table}>
           <thead>
             <tr>
@@ -149,7 +172,7 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
           </thead>
           <tbody>
             {items.map((item) => (
-              <tr key={item.itemId ?? `${item.description}-${item.hsnCode}`}>
+              <tr key={item.itemId ?? `${item.description}-${item.hsnCode}`} style={avoidBreak}>
                 <td style={styles.cell}>{item.description}</td>
                 <td style={styles.cell}>{item.hsnCode || "-"}</td>
                 <td style={styles.cell}>{item.quantity}</td>
@@ -161,28 +184,30 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
         </table>
       </div>
 
-      <div style={styles.totals}>
-        <div style={styles.totalRow}><span>Subtotal</span><span>{formatCurrency(totals.subtotal)}</span></div>
-        <div style={styles.totalRow}><span>CGST</span><span>{formatCurrency(totals.cgst)}</span></div>
-        <div style={styles.totalRow}><span>SGST</span><span>{formatCurrency(totals.sgst)}</span></div>
-        <div style={styles.totalRow}><span>IGST</span><span>{formatCurrency(totals.igst)}</span></div>
-        <div style={{ ...styles.totalRow, fontWeight: 700, fontSize: "14px" }}><span>Total</span><span>{formatCurrency(totals.totalAmount)}</span></div>
-        {type === "invoice" ? (
-          <>
-            <div style={styles.totalRow}><span>Payment Made</span><span>{formatCurrency(totals.paymentMade)}</span></div>
-            <div style={{ ...styles.totalRow, borderBottom: "none", fontWeight: 700, color: "#4338ca" }}><span>Balance Amount</span><span>{formatCurrency(totals.balanceAmount)}</span></div>
-          </>
-        ) : null}
+      <div style={styles.summaryRow}>
+        <div style={styles.wordsBox}>
+          <div style={styles.label}>Total In Words</div>
+          <div style={{ marginTop: "10px", fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>{englishAmountInWords}</div>
+          <div style={{ marginTop: "8px", fontSize: "13px", color: "#475569", fontFamily: '"Noto Sans Devanagari", "Noto Sans", Arial, sans-serif' }}>{hindiAmountInWords}</div>
+          <div style={styles.blankBox} />
+        </div>
+
+        <div style={styles.totals}>
+          <div style={styles.totalRow}><span>Subtotal</span><span>{formatCurrency(totals.subtotal)}</span></div>
+          <div style={styles.totalRow}><span>CGST</span><span>{formatCurrency(totals.cgst)}</span></div>
+          <div style={styles.totalRow}><span>SGST</span><span>{formatCurrency(totals.sgst)}</span></div>
+          <div style={styles.totalRow}><span>IGST</span><span>{formatCurrency(totals.igst)}</span></div>
+          <div style={{ ...styles.totalRow, fontWeight: 700, fontSize: "14px" }}><span>Total</span><span>{formatCurrency(totals.totalAmount)}</span></div>
+          {type === "invoice" ? (
+            <>
+              <div style={styles.totalRow}><span>Payment Made</span><span>{formatCurrency(totals.paymentMade)}</span></div>
+              <div style={{ ...styles.totalRow, borderBottom: "none", fontWeight: 700, color: "#4338ca" }}><span>Balance Amount</span><span>{formatCurrency(totals.balanceAmount)}</span></div>
+            </>
+          ) : null}
+        </div>
       </div>
 
-      <div style={styles.wordsBox}>
-        <div style={styles.label}>Total In Words</div>
-        <div style={{ marginTop: "10px", fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>{englishAmountInWords}</div>
-        <div style={{ marginTop: "8px", fontSize: "13px", color: "#475569" }}>{hindiAmountInWords}</div>
-        <div style={styles.blankBox} />
-      </div>
-
-      <div style={{ ...styles.row, marginTop: "20px", alignItems: "stretch" }}>
+      <div style={styles.notesRow}>
         <div style={styles.notesCard}>
           <div style={styles.label}>Notes</div>
           <div style={{ marginTop: "8px", whiteSpace: "pre-line", color: "#475569" }}>{notes || "-"}</div>

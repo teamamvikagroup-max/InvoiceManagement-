@@ -25,7 +25,7 @@ function HistoryAction({ record, uploadLooksStalled, isDownloading, onDownload }
       <button type="button" onClick={onDownload} disabled={isDownloading} className="btn-secondary w-full sm:w-auto">
         {isDownloading ? "Preparing..." : "Download PDF"}
       </button>
-      {uploadLooksStalled ? <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700">Upload stalled. Downloading from saved history data.</div> : record.pdfStatus === "uploading" ? <div className="rounded-2xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm font-medium text-brand-700">PDF uploading...</div> : <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700">Generated from saved record data.</div>}
+      {uploadLooksStalled ? <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700">Upload stalled. Downloading from saved history data.</div> : record.pdfStatus === "uploading" ? <div className="rounded-2xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm font-medium text-brand-700">PDF uploading...</div> : null}
     </div>
   );
 }

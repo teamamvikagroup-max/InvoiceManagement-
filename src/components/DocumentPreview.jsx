@@ -6,7 +6,7 @@ export default function DocumentPreview({ type, invoiceNumber, dueDate, company,
   const hindiAmountInWords = formatAmountInWordsHindi(totals.totalAmount);
 
   return (
-    <div className="w-[794px] bg-white px-9 pb-14 pt-8 text-slate-900">
+    <div className="w-[794px] bg-white px-9 pb-14 pt-8 font-['Noto_Sans','Noto_Sans_Devanagari','Arial',sans-serif] text-slate-900">
       <div className="flex items-start justify-between border-b border-slate-200 pb-7">
         <div className="max-w-md">
           <h1 className="text-3xl font-bold">{company?.name || "Company Name"}</h1>
@@ -74,8 +74,15 @@ export default function DocumentPreview({ type, invoiceNumber, dueDate, company,
         </table>
       </div>
 
-      <div className="mt-7 flex justify-end">
-        <div className="w-full max-w-[340px] overflow-hidden rounded-3xl border border-indigo-100 bg-slate-50">
+      <div className="mt-7 grid grid-cols-[minmax(0,1fr)_340px] gap-5">
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Total In Words</p>
+          <p className="mt-3 text-sm font-semibold text-slate-900">{englishAmountInWords}</p>
+          <p className="mt-2 font-['Noto_Sans_Devanagari','Noto_Sans','Arial',sans-serif] text-sm text-slate-600">{hindiAmountInWords}</p>
+          <div className="mt-4 h-24 rounded-2xl border border-dashed border-slate-300 bg-slate-50/70" />
+        </div>
+
+        <div className="overflow-hidden rounded-3xl border border-indigo-100 bg-slate-50">
           <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 text-sm text-slate-600"><span>Subtotal</span><span>{formatCurrency(totals.subtotal)}</span></div>
           <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 text-sm text-slate-600"><span>CGST</span><span>{formatCurrency(totals.cgst)}</span></div>
           <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 text-sm text-slate-600"><span>SGST</span><span>{formatCurrency(totals.sgst)}</span></div>
@@ -88,13 +95,6 @@ export default function DocumentPreview({ type, invoiceNumber, dueDate, company,
             </>
           ) : null}
         </div>
-      </div>
-
-      <div className="mt-5 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Total In Words</p>
-        <p className="mt-3 text-sm font-semibold text-slate-900">{englishAmountInWords}</p>
-        <p className="mt-2 text-sm text-slate-600">{hindiAmountInWords}</p>
-        <div className="mt-4 h-24 rounded-2xl border border-dashed border-slate-300 bg-slate-50/70" />
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-6">
