@@ -1,5 +1,5 @@
 import { formatCurrency } from "../utils/calculations";
-import { formatAmountInWordsEnglish, formatAmountInWordsHindi, formatDate, formatWebsite } from "../utils/formatters";
+import { formatAmountInWordsEnglish, formatDate, formatWebsite } from "../utils/formatters";
 
 const avoidBreak = {
   breakInside: "avoid",
@@ -117,7 +117,6 @@ const styles = {
 
 export default function PdfDocument({ type, invoiceNumber, dueDate, company, customer, items, totals, notes, terms, taxType }) {
   const englishAmountInWords = formatAmountInWordsEnglish(totals.totalAmount);
-  const hindiAmountInWords = formatAmountInWordsHindi(totals.totalAmount);
 
   return (
     <div style={styles.page}>
@@ -188,7 +187,6 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
         <div style={styles.wordsBox}>
           <div style={styles.label}>Total In Words</div>
           <div style={{ marginTop: "10px", fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>{englishAmountInWords}</div>
-          <div style={{ marginTop: "8px", fontSize: "13px", color: "#475569", fontFamily: '"Noto Sans Devanagari", "Noto Sans", Arial, sans-serif' }}>{hindiAmountInWords}</div>
           <div style={styles.blankBox} />
         </div>
 

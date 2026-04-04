@@ -86,11 +86,14 @@ export default function CompanyProfilePage() {
     setStatus(null);
 
     const activeCompany = selectedCompany;
+    let uploadedLogoPath = "";
 
     try {
       let logoPayload = {};
       if (logoFile) {
+        console.info("Uploading company logo before save", { companyName: values.name, fileName: logoFile.name, fileSize: logoFile.size });
         logoPayload = await uploadCompanyLogo(logoFile, values.name);
+        uploadedLogoPath = logoPayload.logoPath ?? "";
       }
 
       if (activeCompany) {
@@ -115,8 +118,8 @@ export default function CompanyProfilePage() {
           ),
         );
 
-        if (logoFile && activeCompany.logoPath) {
-          await deleteStorageFile(activeCompany.logoPath);
+        if (logoFile && activeCompany.logoPath && activeCompany.logoPath !== logoPayload.logoPath) {
+          void deleteStorageFile(activeCompany.logoPath);
         }
       } else {
         const createdCompany = await createCompany({
@@ -142,7 +145,18 @@ export default function CompanyProfilePage() {
       setIsModalOpen(false);
       setSelectedCompany(null);
     } catch (error) {
-      console.error("Company save failed", error);
+      console.error("Company save failed", {
+        error,
+        companyId: activeCompany?.id ?? "new-company",
+        companyName: values.name,
+        hasLogoFile: Boolean(logoFile),
+        uploadedLogoPath,
+      });
+
+      if (uploadedLogoPath) {
+        void deleteStorageFile(uploadedLogoPath);
+      }
+
       setStatus({ type: "error", message: getCompanyErrorMessage(error, Boolean(logoFile)) });
     } finally {
       setIsSubmitting(false);

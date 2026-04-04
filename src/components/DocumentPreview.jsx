@@ -1,9 +1,8 @@
 import { formatCurrency } from "../utils/calculations";
-import { formatAmountInWordsEnglish, formatAmountInWordsHindi, formatDate, formatWebsite } from "../utils/formatters";
+import { formatAmountInWordsEnglish, formatDate, formatWebsite } from "../utils/formatters";
 
 export default function DocumentPreview({ type, invoiceNumber, dueDate, company, customer, items, totals, notes, terms, taxType }) {
   const englishAmountInWords = formatAmountInWordsEnglish(totals.totalAmount);
-  const hindiAmountInWords = formatAmountInWordsHindi(totals.totalAmount);
 
   return (
     <div className="w-[794px] bg-white px-9 pb-14 pt-8 font-['Noto_Sans','Noto_Sans_Devanagari','Arial',sans-serif] text-slate-900">
@@ -78,7 +77,6 @@ export default function DocumentPreview({ type, invoiceNumber, dueDate, company,
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Total In Words</p>
           <p className="mt-3 text-sm font-semibold text-slate-900">{englishAmountInWords}</p>
-          <p className="mt-2 font-['Noto_Sans_Devanagari','Noto_Sans','Arial',sans-serif] text-sm text-slate-600">{hindiAmountInWords}</p>
           <div className="mt-4 h-24 rounded-2xl border border-dashed border-slate-300 bg-slate-50/70" />
         </div>
 

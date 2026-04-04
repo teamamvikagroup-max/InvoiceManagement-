@@ -8,7 +8,7 @@ import {
   set,
   update,
 } from "firebase/database";
-import { deleteObject, getDownloadURL, ref as storageRef, uploadBytes, uploadBytesResumable } from "firebase/storage";
+import { deleteObject, getDownloadURL, ref as storageRef, uploadBytesResumable } from "firebase/storage";
 import { assertDatabaseConfigured, assertStorageConfigured } from "./config";
 
 const DEFAULT_OWNER_ID = "userId1";
@@ -128,13 +128,42 @@ export function subscribeToCompanies(onData, onError) {
 }
 
 export async function uploadCompanyLogo(file, companyName) {
+  if (!file) {
+    throw new Error("No logo file was provided for upload.");
+  }
+
   const storage = assertStorageConfigured();
-  const safeName = companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
-  const extension = file.name.split(".").pop();
+  const safeName = (companyName || "company")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "") || "company";
+  const extension = file.name?.includes(".") ? file.name.split(".").pop() : "png";
   const logoPath = `company-logos/${safeName}-${Date.now()}.${extension}`;
   const logoReference = storageRef(storage, logoPath);
-  await uploadBytes(logoReference, file);
-  return { logoPath, logoUrl: await getDownloadURL(logoReference) };
+
+  console.info("Starting company logo upload", {
+    companyName,
+    fileName: file.name,
+    fileSize: file.size,
+    logoPath,
+  });
+
+  await uploadBlobResumable(
+    logoReference,
+    file,
+    { contentType: file.type || "application/octet-stream" },
+    LOGO_UPLOAD_TIMEOUT_MS,
+  );
+
+  const logoUrl = await withTimeout(
+    getDownloadURL(logoReference),
+    PDF_URL_TIMEOUT_MS,
+    "Logo URL generation timed out after upload.",
+  );
+
+  console.info("Company logo upload completed", { logoPath });
+
+  return { logoPath, logoUrl };
 }
 
 export async function deleteStorageFile(path) {
@@ -208,6 +237,7 @@ export async function reserveDocumentNumber(type) {
 
 const PDF_UPLOAD_TIMEOUT_MS = 90000;
 const PDF_URL_TIMEOUT_MS = 20000;
+const LOGO_UPLOAD_TIMEOUT_MS = 30000;
 
 function withTimeout(promise, timeoutMs, message) {
   return new Promise((resolve, reject) => {
