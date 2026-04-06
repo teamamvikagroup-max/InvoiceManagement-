@@ -1,4 +1,5 @@
 import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
 import { getDatabase } from "firebase/database";
 import { getStorage } from "firebase/storage";
 
@@ -41,6 +42,7 @@ function normalizeStorageBucket(bucket) {
 const app = initializeApp(firebaseConfig);
 const normalizedStorageBucket = normalizeStorageBucket(firebaseConfig.storageBucket);
 
+export const auth = getAuth(app);
 export const rtdb = firebaseDatabaseUrl ? getDatabase(app) : null;
 export const storage = normalizedStorageBucket ? getStorage(app, normalizedStorageBucket) : null;
 export const hasStorageBucket = Boolean(normalizedStorageBucket);
