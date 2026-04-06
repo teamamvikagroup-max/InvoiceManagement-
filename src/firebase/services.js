@@ -12,7 +12,8 @@ import { deleteObject, getDownloadURL, ref as storageRef, uploadBytesResumable }
 import { assertDatabaseConfigured, assertStorageConfigured } from "./config";
 
 const PDF_UPLOAD_TIMEOUT_MS = 90000;
-const PDF_URL_TIMEOUT_MS = 20000;
+const FILE_URL_TIMEOUT_MS = 20000;
+const LOGO_UPLOAD_TIMEOUT_MS = 30000;
 
 function databaseRef(path) {
   return ref(assertDatabaseConfigured(), path);
@@ -23,6 +24,8 @@ function snapshotToCompanies(value) {
     firebaseId,
     id: company?.id ?? firebaseId,
     ...company,
+    logoUrl: company?.logoUrl ?? company?.logoBase64 ?? "",
+    logoBase64: company?.logoBase64 ?? "",
   }));
 }
 
@@ -70,8 +73,8 @@ function normalizeDocument(type, company, documentKey, documentValue) {
       phone: company.phone ?? "",
       email: company.email ?? "",
       website: company.website ?? "",
-      logoUrl: company.logoBase64 ?? company.logoUrl ?? "",
-      logoBase64: company.logoBase64 ?? company.logoUrl ?? "",
+      logoUrl: company.logoUrl ?? company.logoBase64 ?? "",
+      logoBase64: company.logoBase64 ?? "",
     },
     customer: documentValue.customer ?? {
       name: documentValue.clientName ?? "",
@@ -98,7 +101,7 @@ function normalizeDocument(type, company, documentKey, documentValue) {
     terms: documentValue.terms ?? "",
     pdfUrl: documentValue.pdfUrl ?? "",
     pdfPath: documentValue.pdfPath ?? "",
-    pdfStatus: documentValue.pdfStatus ?? (documentValue.pdfUrl ? "uploaded" : "local_only"),
+    pdfStatus: documentValue.pdfStatus ?? (documentValue.pdfUrl ? "uploaded" : "missing"),
     createdAt: Number(documentValue.createdAt ?? 0),
   };
 }
@@ -127,101 +130,6 @@ export function subscribeToCompanies(onData, onError) {
     onError?.(error);
     return () => {};
   }
-}
-
-export async function uploadCompanyLogo(file) {
-  if (!file) {
-    return { logoBase64: "" };
-  }
-
-  if (!file.type?.startsWith("image/")) {
-    throw new Error("Please select a valid image file for the company logo.");
-  }
-
-  console.info("Reading company logo file for base64 storage", {
-    fileName: file.name,
-    fileSize: file.size,
-    fileType: file.type,
-  });
-
-  const logoBase64 = await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
-    reader.onerror = () => reject(new Error("Unable to read the selected logo file."));
-    reader.readAsDataURL(file);
-  });
-
-  console.info("Company logo file converted to base64 successfully");
-  return { logoBase64 };
-}
-
-export async function deleteStorageFile(path) {
-  if (!path) {
-    return;
-  }
-
-  try {
-    const storage = assertStorageConfigured();
-    await deleteObject(storageRef(storage, path));
-  } catch (error) {
-    console.warn("Storage cleanup failed", error);
-  }
-}
-
-export async function createCompany(payload) {
-  const companiesReference = databaseRef("companies");
-  const companyReference = push(companiesReference);
-  const companyId = companyReference.key;
-  const companyData = {
-    id: companyId,
-    name: payload.name ?? "",
-    address: payload.address ?? "",
-    email: payload.email ?? "",
-    gstin: payload.gstin ?? "",
-    phone: payload.phone ?? "",
-    website: payload.website ?? "",
-    logoBase64: payload.logoBase64 ?? "",
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  };
-
-  await set(companyReference, companyData);
-  return { id: companyId, firebaseId: companyId };
-}
-
-export async function updateCompany(companyId, payload) {
-  await update(databaseRef(`companies/${companyId}`), {
-    name: payload.name ?? "",
-    address: payload.address ?? "",
-    email: payload.email ?? "",
-    gstin: payload.gstin ?? "",
-    phone: payload.phone ?? "",
-    website: payload.website ?? "",
-    logoBase64: payload.logoBase64 ?? "",
-    updatedAt: Date.now(),
-  });
-}
-
-export async function deleteCompany(company) {
-  await remove(databaseRef(`companies/${company.firebaseId ?? company.id}`));
-}
-
-function counterPath(type) {
-  return `meta/counters/${type === "invoice" ? "invoice" : "quotation"}`;
-}
-
-export async function peekNextDocumentNumber(type) {
-  const snapshot = await get(databaseRef(counterPath(type)));
-  const value = snapshot.exists() ? Number(snapshot.val() ?? 0) : 0;
-  const prefix = type === "invoice" ? "INV" : "QTN";
-  return `${prefix}-${String(value + 1).padStart(6, "0")}`;
-}
-
-export async function reserveDocumentNumber(type) {
-  const snapshot = await runTransaction(databaseRef(counterPath(type)), (currentValue) => Number(currentValue ?? 0) + 1);
-  const next = Number(snapshot.snapshot.val() ?? 1);
-  const prefix = type === "invoice" ? "INV" : "QTN";
-  return `${prefix}-${String(next).padStart(6, "0")}`;
 }
 
 function withTimeout(promise, timeoutMs, message) {
@@ -270,20 +178,134 @@ function uploadBlobResumable(fileRef, blob, metadata, timeoutMs, options = {}) {
   });
 }
 
-export async function uploadDocumentPdf(invoiceNumber, blob) {
+export async function uploadCompanyLogo(companyId, file) {
+  if (!file) {
+    return { logoUrl: "", logoPath: "" };
+  }
+
+  if (!companyId) {
+    throw new Error("Company ID is required before uploading a logo.");
+  }
+
+  if (!file.type?.startsWith("image/")) {
+    throw new Error("Please select a valid image file for the company logo.");
+  }
+
   const storage = assertStorageConfigured();
-  const pdfPath = `invoices/${invoiceNumber}.pdf`;
+  const safeFilename = (file.name || "logo.png").replace(/[^a-zA-Z0-9._-]+/g, "-");
+  const logoPath = `company-logos/${companyId}/${safeFilename}`;
+  const logoReference = storageRef(storage, logoPath);
+
+  await uploadBlobResumable(
+    logoReference,
+    file,
+    { contentType: file.type || "application/octet-stream" },
+    LOGO_UPLOAD_TIMEOUT_MS,
+    {
+      timeoutMessage: "Logo upload timed out. Please try again.",
+      progressLabel: "Company logo upload progress",
+    },
+  );
+
+  const logoUrl = await withTimeout(
+    getDownloadURL(logoReference),
+    FILE_URL_TIMEOUT_MS,
+    "Logo URL generation timed out after upload.",
+  );
+
+  return { logoUrl, logoPath };
+}
+
+export async function deleteStorageFile(path) {
+  if (!path) {
+    return;
+  }
+
+  try {
+    const storage = assertStorageConfigured();
+    await deleteObject(storageRef(storage, path));
+  } catch (error) {
+    console.warn("Storage cleanup failed", error);
+  }
+}
+
+export async function createCompany(payload) {
+  const companiesReference = databaseRef("companies");
+  const companyReference = push(companiesReference);
+  const companyId = companyReference.key;
+  const companyData = {
+    id: companyId,
+    name: payload.name ?? "",
+    address: payload.address ?? "",
+    email: payload.email ?? "",
+    gstin: payload.gstin ?? "",
+    phone: payload.phone ?? "",
+    website: payload.website ?? "",
+    logoUrl: payload.logoUrl ?? "",
+    logoPath: payload.logoPath ?? "",
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+
+  await set(companyReference, companyData);
+  return { id: companyId, firebaseId: companyId };
+}
+
+export async function updateCompany(companyId, payload) {
+  await update(databaseRef(`companies/${companyId}`), {
+    name: payload.name ?? "",
+    address: payload.address ?? "",
+    email: payload.email ?? "",
+    gstin: payload.gstin ?? "",
+    phone: payload.phone ?? "",
+    website: payload.website ?? "",
+    logoUrl: payload.logoUrl ?? "",
+    logoPath: payload.logoPath ?? "",
+    updatedAt: Date.now(),
+  });
+}
+
+export async function deleteCompany(company) {
+  await remove(databaseRef(`companies/${company.firebaseId ?? company.id}`));
+  if (company.logoPath) {
+    await deleteStorageFile(company.logoPath);
+  }
+}
+
+function counterPath(type) {
+  return `meta/counters/${type === "invoice" ? "invoice" : "quotation"}`;
+}
+
+export async function peekNextDocumentNumber(type) {
+  const snapshot = await get(databaseRef(counterPath(type)));
+  const value = snapshot.exists() ? Number(snapshot.val() ?? 0) : 0;
+  const prefix = type === "invoice" ? "INV" : "QTN";
+  return `${prefix}-${String(value + 1).padStart(6, "0")}`;
+}
+
+export async function reserveDocumentNumber(type) {
+  const snapshot = await runTransaction(databaseRef(counterPath(type)), (currentValue) => Number(currentValue ?? 0) + 1);
+  const next = Number(snapshot.snapshot.val() ?? 1);
+  const prefix = type === "invoice" ? "INV" : "QTN";
+  return `${prefix}-${String(next).padStart(6, "0")}`;
+}
+
+export async function uploadDocumentPdf(type, documentNumber, blob) {
+  const storage = assertStorageConfigured();
+  const folder = type === "invoice" ? "invoices" : "quotations";
+  const timestamp = Date.now();
+  const pdfPath = `${folder}/${documentNumber}_${timestamp}.pdf`;
   const pdfReference = storageRef(storage, pdfPath);
 
   await uploadBlobResumable(pdfReference, blob, { contentType: "application/pdf" }, PDF_UPLOAD_TIMEOUT_MS, {
-    timeoutMessage: "PDF upload timed out. Falling back to local download.",
-    progressLabel: "PDF upload progress",
+    timeoutMessage: `${type === "invoice" ? "Invoice" : "Quotation"} PDF upload timed out.`,
+    progressLabel: `${type === "invoice" ? "Invoice" : "Quotation"} PDF upload progress`,
   });
 
   const pdfUrl = await withTimeout(
     getDownloadURL(pdfReference),
-    PDF_URL_TIMEOUT_MS,
-    "PDF URL generation timed out. Falling back to local download.",
+    FILE_URL_TIMEOUT_MS,
+    `${type === "invoice" ? "Invoice" : "Quotation"} PDF URL generation timed out.`,
   );
 
   return { pdfPath, pdfUrl };
@@ -315,7 +337,7 @@ export async function saveInvoiceRecord(payload) {
     terms: payload.terms ?? "",
     pdfUrl: payload.pdfUrl ?? "",
     pdfPath: payload.pdfPath ?? "",
-    pdfStatus: payload.pdfStatus ?? "local_only",
+    pdfStatus: payload.pdfUrl ? "uploaded" : payload.pdfStatus ?? "missing",
     createdAt: Date.now(),
   };
 
@@ -378,7 +400,7 @@ export function buildCompanySnapshot(company) {
     phone: company.phone ?? "",
     email: company.email ?? "",
     website: company.website ?? "",
-    logoUrl: company.logoBase64 ?? company.logoUrl ?? "",
-    logoBase64: company.logoBase64 ?? company.logoUrl ?? "",
+    logoUrl: company.logoUrl ?? company.logoBase64 ?? "",
+    logoBase64: company.logoBase64 ?? "",
   };
 }

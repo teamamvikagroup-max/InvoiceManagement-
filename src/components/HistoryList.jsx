@@ -1,18 +1,18 @@
 import { useState } from "react";
 import { formatCurrency } from "../utils/calculations";
 import { formatDate, formatTimestamp } from "../utils/formatters";
-import { downloadHistoryPdf } from "../utils/historyDownloads";
+import { downloadPdfUrl, openPdfUrl } from "../utils/historyDownloads";
 import EmptyState from "./EmptyState";
 
 const STALLED_UPLOAD_MS = 60000;
 
-function HistoryAction({ record, uploadLooksStalled, isDownloading, onDownload }) {
+function HistoryAction({ record, uploadLooksStalled, isDownloading, onDownload, onOpen }) {
   if (record.pdfUrl) {
     return (
       <div className="flex w-full flex-col gap-3 sm:flex-row xl:justify-end">
-        <a href={record.pdfUrl} target="_blank" rel="noreferrer" className="btn-primary w-full sm:w-auto">
+        <button type="button" onClick={onOpen} className="btn-primary w-full sm:w-auto">
           Open PDF
-        </a>
+        </button>
         <button type="button" onClick={onDownload} disabled={isDownloading} className="btn-secondary w-full sm:w-auto">
           {isDownloading ? "Preparing..." : "Download PDF"}
         </button>
@@ -22,10 +22,10 @@ function HistoryAction({ record, uploadLooksStalled, isDownloading, onDownload }
 
   return (
     <div className="flex w-full flex-col gap-3 xl:items-end">
-      <button type="button" onClick={onDownload} disabled={isDownloading} className="btn-secondary w-full sm:w-auto">
-        {isDownloading ? "Preparing..." : "Download PDF"}
+      <button type="button" disabled className="btn-secondary w-full cursor-not-allowed opacity-60 sm:w-auto">
+        PDF unavailable
       </button>
-      {uploadLooksStalled ? <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700">Upload stalled. Downloading from saved history data.</div> : record.pdfStatus === "uploading" ? <div className="rounded-2xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm font-medium text-brand-700">PDF uploading...</div> : null}
+      {uploadLooksStalled ? <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700">Upload stalled. PDF URL is not available yet.</div> : record.pdfStatus === "uploading" ? <div className="rounded-2xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm font-medium text-brand-700">PDF uploading...</div> : <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-600">No PDF URL found for this record.</div>}
     </div>
   );
 }
@@ -39,12 +39,21 @@ export default function HistoryList({ type, records, isLoading }) {
   const handleDownload = async (record) => {
     try {
       setDownloadingId(record.id);
-      await downloadHistoryPdf(record, type);
+      downloadPdfUrl(record.pdfUrl, `${record.invoiceNumber}.pdf`);
     } catch (error) {
-      console.error("Unable to generate PDF from history record", error);
-      window.alert("Unable to generate the PDF from history right now. Please try again.");
+      console.error("Unable to download PDF from history record", error);
+      window.alert("Unable to download the PDF right now. Please try again.");
     } finally {
       setDownloadingId("");
+    }
+  };
+
+  const handleOpen = (record) => {
+    try {
+      openPdfUrl(record.pdfUrl);
+    } catch (error) {
+      console.error("Unable to open PDF from history record", error);
+      window.alert("Unable to open the PDF right now. Please try again.");
     }
   };
 
@@ -88,6 +97,7 @@ export default function HistoryList({ type, records, isLoading }) {
                     uploadLooksStalled={uploadLooksStalled}
                     isDownloading={downloadingId === record.id}
                     onDownload={() => handleDownload(record)}
+                    onOpen={() => handleOpen(record)}
                   />
                 </div>
               </div>

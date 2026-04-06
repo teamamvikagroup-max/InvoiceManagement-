@@ -70,6 +70,8 @@ export default function HistoryPage({ type }) {
   }, [type]);
 
   const filteredRecords = useMemo(() => records.filter((record) => isWithinSelectedRange(record, fromDate, toDate)), [records, fromDate, toDate]);
+  const downloadableRangeRecords = useMemo(() => filteredRecords.filter((record) => record.pdfUrl), [filteredRecords]);
+  const downloadableAllRecords = useMemo(() => records.filter((record) => record.pdfUrl), [records]);
 
   const rangeError = useMemo(() => {
     if (fromDate && toDate && dayjs(fromDate).isAfter(dayjs(toDate), "day")) {
@@ -81,7 +83,7 @@ export default function HistoryPage({ type }) {
 
   const handleZipDownload = async (recordsToDownload, mode) => {
     if (!recordsToDownload.length) {
-      setDownloadStatus({ type: "error", message: `No ${type}s found for this download.` });
+      setDownloadStatus({ type: "error", message: `No ${type} PDFs with Firebase Storage URLs are available for this download.` });
       return;
     }
 
@@ -136,14 +138,14 @@ export default function HistoryPage({ type }) {
           <button type="button" className="btn-secondary w-full lg:w-auto" onClick={() => { setFromDate(""); setToDate(""); setDownloadStatus(null); }}>
             Clear Filter
           </button>
-          <button type="button" className="btn-primary w-full lg:w-auto" onClick={() => handleZipDownload(filteredRecords, "range")} disabled={isDownloadingRange || isDownloadingAll || !filteredRecords.length}>
+          <button type="button" className="btn-primary w-full lg:w-auto" onClick={() => handleZipDownload(downloadableRangeRecords, "range")} disabled={isDownloadingRange || isDownloadingAll || !downloadableRangeRecords.length}>
             {isDownloadingRange ? "Preparing ZIP..." : "Download Range ZIP"}
           </button>
         </div>
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-500">Need everything at once? Export the full {type} history in one ZIP file.</p>
-          <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => handleZipDownload(records, "all")} disabled={isDownloadingRange || isDownloadingAll || !records.length}>
+          <button type="button" className="btn-secondary w-full sm:w-auto" onClick={() => handleZipDownload(downloadableAllRecords, "all")} disabled={isDownloadingRange || isDownloadingAll || !downloadableAllRecords.length}>
             {isDownloadingAll ? "Preparing All..." : "Download All ZIP"}
           </button>
         </div>
