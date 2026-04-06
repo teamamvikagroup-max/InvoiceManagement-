@@ -131,9 +131,9 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "12px", ...avoidBreak }}>
-          {company?.logoUrl ? (
+          {(company?.logoBase64 || company?.logoUrl) ? (
             <div style={{ border: "1px solid #dbe4ff", borderRadius: "14px", padding: "10px", backgroundColor: "#ffffff" }}>
-              <img src={company.logoUrl} alt={company.name} style={{ height: "60px", width: "60px", objectFit: "contain" }} crossOrigin="anonymous" />
+              <img src={company.logoBase64 || company.logoUrl} alt={company.name} style={{ height: "60px", width: "60px", objectFit: "contain" }} crossOrigin="anonymous" />
             </div>
           ) : null}
           <div style={styles.titleBox}>

@@ -11,16 +11,17 @@ import {
 import { deleteObject, getDownloadURL, ref as storageRef, uploadBytesResumable } from "firebase/storage";
 import { assertDatabaseConfigured, assertStorageConfigured } from "./config";
 
-const DEFAULT_OWNER_ID = "userId1";
+const PDF_UPLOAD_TIMEOUT_MS = 90000;
+const PDF_URL_TIMEOUT_MS = 20000;
 
 function databaseRef(path) {
   return ref(assertDatabaseConfigured(), path);
 }
 
 function snapshotToCompanies(value) {
-  return Object.entries(value ?? {}).map(([companyKey, company]) => ({
-    companyKey,
-    id: company.id ?? companyKey,
+  return Object.entries(value ?? {}).map(([firebaseId, company]) => ({
+    firebaseId,
+    id: company?.id ?? firebaseId,
     ...company,
   }));
 }
@@ -61,15 +62,16 @@ function normalizeDocument(type, company, documentKey, documentValue) {
   return {
     id: documentKey,
     type,
-    companyId: company.id ?? company.companyKey,
+    companyId: company.id ?? company.firebaseId,
     companySnapshot: {
-      name: company.name,
-      address: company.address,
-      gstin: company.gstin,
-      phone: company.phone,
-      email: company.email,
-      website: company.website,
-      logoUrl: company.logoUrl ?? "",
+      name: company.name ?? "",
+      address: company.address ?? "",
+      gstin: company.gstin ?? "",
+      phone: company.phone ?? "",
+      email: company.email ?? "",
+      website: company.website ?? "",
+      logoUrl: company.logoBase64 ?? company.logoUrl ?? "",
+      logoBase64: company.logoBase64 ?? company.logoUrl ?? "",
     },
     customer: documentValue.customer ?? {
       name: documentValue.clientName ?? "",
@@ -110,7 +112,7 @@ export function subscribeToCompanies(onData, onError) {
       companiesReference,
       (snapshot) => {
         const companies = snapshotToCompanies(snapshot.val()).sort(
-          (a, b) => Number(b.createdAt ?? 0) - Number(a.createdAt ?? 0),
+          (a, b) => Number(b.updatedAt ?? b.createdAt ?? 0) - Number(a.updatedAt ?? a.createdAt ?? 0),
         );
         console.info("Companies loaded from Realtime Database", companies.length);
         onData(companies);
@@ -127,47 +129,30 @@ export function subscribeToCompanies(onData, onError) {
   }
 }
 
-export async function uploadCompanyLogo(file, companyName) {
+export async function uploadCompanyLogo(file) {
   if (!file) {
-    throw new Error("No logo file was provided for upload.");
+    return { logoBase64: "" };
   }
 
-  const storage = assertStorageConfigured();
-  const safeName = (companyName || "company")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "") || "company";
-  const extension = file.name?.includes(".") ? file.name.split(".").pop() : "png";
-  const logoPath = `company-logos/${safeName}-${Date.now()}.${extension}`;
-  const logoReference = storageRef(storage, logoPath);
+  if (!file.type?.startsWith("image/")) {
+    throw new Error("Please select a valid image file for the company logo.");
+  }
 
-  console.info("Starting company logo upload", {
-    companyName,
+  console.info("Reading company logo file for base64 storage", {
     fileName: file.name,
     fileSize: file.size,
-    logoPath,
+    fileType: file.type,
   });
 
-  await uploadBlobResumable(
-    logoReference,
-    file,
-    { contentType: file.type || "application/octet-stream" },
-    LOGO_UPLOAD_TIMEOUT_MS,
-    {
-      timeoutMessage: "Logo upload timed out. Please try again.",
-      progressLabel: "Company logo upload progress",
-    },
-  );
+  const logoBase64 = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+    reader.onerror = () => reject(new Error("Unable to read the selected logo file."));
+    reader.readAsDataURL(file);
+  });
 
-  const logoUrl = await withTimeout(
-    getDownloadURL(logoReference),
-    PDF_URL_TIMEOUT_MS,
-    "Logo URL generation timed out after upload.",
-  );
-
-  console.info("Company logo upload completed", { logoPath });
-
-  return { logoPath, logoUrl };
+  console.info("Company logo file converted to base64 successfully");
+  return { logoBase64 };
 }
 
 export async function deleteStorageFile(path) {
@@ -187,38 +172,38 @@ export async function createCompany(payload) {
   const companiesReference = databaseRef("companies");
   const companyReference = push(companiesReference);
   const companyId = companyReference.key;
-  await set(companyReference, {
+  const companyData = {
     id: companyId,
-    ownerId: payload.ownerId ?? DEFAULT_OWNER_ID,
-    name: payload.name,
-    email: payload.email ?? "",
-    phone: payload.phone ?? "",
-    gstin: payload.gstin ?? "",
+    name: payload.name ?? "",
     address: payload.address ?? "",
+    email: payload.email ?? "",
+    gstin: payload.gstin ?? "",
+    phone: payload.phone ?? "",
     website: payload.website ?? "",
-    logoUrl: payload.logoUrl ?? "",
-    logoPath: payload.logoPath ?? "",
-    clients: payload.clients ?? {},
-    products: payload.products ?? {},
-    quotations: payload.quotations ?? {},
-    invoices: payload.invoices ?? {},
-    payments: payload.payments ?? {},
+    logoBase64: payload.logoBase64 ?? "",
     createdAt: Date.now(),
     updatedAt: Date.now(),
-  });
-  return { id: companyId };
+  };
+
+  await set(companyReference, companyData);
+  return { id: companyId, firebaseId: companyId };
 }
 
 export async function updateCompany(companyId, payload) {
   await update(databaseRef(`companies/${companyId}`), {
-    ...payload,
+    name: payload.name ?? "",
+    address: payload.address ?? "",
+    email: payload.email ?? "",
+    gstin: payload.gstin ?? "",
+    phone: payload.phone ?? "",
+    website: payload.website ?? "",
+    logoBase64: payload.logoBase64 ?? "",
     updatedAt: Date.now(),
   });
 }
 
 export async function deleteCompany(company) {
-  await remove(databaseRef(`companies/${company.id}`));
-  await deleteStorageFile(company.logoPath);
+  await remove(databaseRef(`companies/${company.firebaseId ?? company.id}`));
 }
 
 function counterPath(type) {
@@ -238,10 +223,6 @@ export async function reserveDocumentNumber(type) {
   const prefix = type === "invoice" ? "INV" : "QTN";
   return `${prefix}-${String(next).padStart(6, "0")}`;
 }
-
-const PDF_UPLOAD_TIMEOUT_MS = 90000;
-const PDF_URL_TIMEOUT_MS = 20000;
-const LOGO_UPLOAD_TIMEOUT_MS = 30000;
 
 function withTimeout(promise, timeoutMs, message) {
   return new Promise((resolve, reject) => {
@@ -391,12 +372,13 @@ export function subscribeToDocuments(type, onData, onError) {
 
 export function buildCompanySnapshot(company) {
   return {
-    name: company.name,
-    address: company.address,
-    gstin: company.gstin,
-    phone: company.phone,
-    email: company.email,
-    website: company.website,
-    logoUrl: company.logoUrl ?? "",
+    name: company.name ?? "",
+    address: company.address ?? "",
+    gstin: company.gstin ?? "",
+    phone: company.phone ?? "",
+    email: company.email ?? "",
+    website: company.website ?? "",
+    logoUrl: company.logoBase64 ?? company.logoUrl ?? "",
+    logoBase64: company.logoBase64 ?? company.logoUrl ?? "",
   };
 }

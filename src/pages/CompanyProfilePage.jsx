@@ -4,7 +4,7 @@ import EmptyState from "../components/EmptyState";
 import LoadingSpinner from "../components/LoadingSpinner";
 import StatusAlert from "../components/StatusAlert";
 import { firebaseDatabaseUrl } from "../firebase/config";
-import { createCompany, deleteCompany, deleteStorageFile, subscribeToCompanies, updateCompany, uploadCompanyLogo } from "../firebase/services";
+import { createCompany, deleteCompany, subscribeToCompanies, updateCompany, uploadCompanyLogo } from "../firebase/services";
 import { formatWebsite } from "../utils/formatters";
 
 const LOAD_TIMEOUT_MS = 8000;
@@ -22,20 +22,12 @@ function getCompanyErrorMessage(error, hasLogoFile = false) {
     return "Firebase Realtime Database permissions are blocking this action. In Firebase Console, open Realtime Database -> Rules and allow read/write access for development, then try again.";
   }
 
-  if (code.includes("storage/unauthorized") || code.includes("storage/unauthenticated")) {
-    return "Firebase Storage permissions are blocking logo upload. In Firebase Console, open Storage -> Rules and allow read/write access for development, or save the company without a logo first.";
+  if (hasLogoFile && message.toLowerCase().includes("image file")) {
+    return message;
   }
 
-  if (code.includes("storage/bucket-not-found") || message.includes("No default bucket found")) {
-    return "Firebase Storage is not fully set up for this project. Enable Storage in Firebase Console and verify VITE_FIREBASE_STORAGE_BUCKET in your .env file.";
-  }
-
-  if (hasLogoFile && message.toLowerCase().includes("logo upload timed out")) {
-    return "Logo upload took too long. Please try again with a smaller image or check Firebase Storage connectivity.";
-  }
-
-  if (hasLogoFile && message.toLowerCase().includes("storage")) {
-    return "Logo upload failed because Firebase Storage is not accessible. Check that Storage is enabled and its rules allow writes.";
+  if (hasLogoFile && message.toLowerCase().includes("logo file")) {
+    return message;
   }
 
   if (message.includes("Realtime Database")) {
@@ -62,7 +54,7 @@ export default function CompanyProfilePage() {
     const unsubscribe = subscribeToCompanies(
       (data) => {
         window.clearTimeout(timer);
-        setCompanies(data);
+        setCompanies(Array.isArray(data) ? data : []);
         setIsLoading(false);
       },
       (error) => {
@@ -90,29 +82,23 @@ export default function CompanyProfilePage() {
     setStatus(null);
 
     const activeCompany = selectedCompany;
-    let uploadedLogoPath = "";
 
     try {
-      let logoPayload = {};
-      if (logoFile) {
-        console.info("Uploading company logo before save", { companyName: values.name, fileName: logoFile.name, fileSize: logoFile.size });
-        logoPayload = await uploadCompanyLogo(logoFile, values.name);
-        uploadedLogoPath = logoPayload.logoPath ?? "";
-      }
+      const logoPayload = logoFile
+        ? await uploadCompanyLogo(logoFile)
+        : { logoBase64: activeCompany?.logoBase64 ?? activeCompany?.logoUrl ?? "" };
+
+      const nextCompanyPayload = {
+        ...values,
+        logoBase64: logoPayload.logoBase64 ?? activeCompany?.logoBase64 ?? activeCompany?.logoUrl ?? "",
+      };
 
       if (activeCompany) {
-        const nextCompanyPayload = {
-          ...values,
-          ...(logoPayload.logoUrl
-            ? logoPayload
-            : { logoUrl: activeCompany.logoUrl ?? "", logoPath: activeCompany.logoPath ?? "" }),
-        };
-
-        await updateCompany(activeCompany.id, nextCompanyPayload);
+        await updateCompany(activeCompany.firebaseId ?? activeCompany.id, nextCompanyPayload);
 
         setCompanies((current) =>
           current.map((company) =>
-            company.id === activeCompany.id
+            (company.firebaseId ?? company.id) === (activeCompany.firebaseId ?? activeCompany.id)
               ? {
                   ...company,
                   ...nextCompanyPayload,
@@ -121,23 +107,14 @@ export default function CompanyProfilePage() {
               : company,
           ),
         );
-
-        if (logoFile && activeCompany.logoPath && activeCompany.logoPath !== logoPayload.logoPath) {
-          void deleteStorageFile(activeCompany.logoPath);
-        }
       } else {
-        const createdCompany = await createCompany({
-          ...values,
-          logoUrl: logoPayload.logoUrl ?? "",
-          logoPath: logoPayload.logoPath ?? "",
-        });
+        const createdCompany = await createCompany(nextCompanyPayload);
 
         setCompanies((current) => [
           {
+            firebaseId: createdCompany.firebaseId,
             id: createdCompany.id,
-            ...values,
-            logoUrl: logoPayload.logoUrl ?? "",
-            logoPath: logoPayload.logoPath ?? "",
+            ...nextCompanyPayload,
             createdAt: Date.now(),
             updatedAt: Date.now(),
           },
@@ -151,16 +128,10 @@ export default function CompanyProfilePage() {
     } catch (error) {
       console.error("Company save failed", {
         error,
-        companyId: activeCompany?.id ?? "new-company",
+        companyId: activeCompany?.firebaseId ?? activeCompany?.id ?? "new-company",
         companyName: values.name,
         hasLogoFile: Boolean(logoFile),
-        uploadedLogoPath,
       });
-
-      if (uploadedLogoPath) {
-        void deleteStorageFile(uploadedLogoPath);
-      }
-
       setStatus({ type: "error", message: getCompanyErrorMessage(error, Boolean(logoFile)) });
     } finally {
       setIsSubmitting(false);
@@ -171,8 +142,10 @@ export default function CompanyProfilePage() {
     if (!window.confirm(`Delete ${company.name}? This action cannot be undone.`)) return;
     try {
       await deleteCompany(company);
+      setCompanies((current) => current.filter((item) => (item.firebaseId ?? item.id) !== (company.firebaseId ?? company.id)));
       setStatus({ type: "success", message: "Company deleted successfully." });
     } catch (error) {
+      console.error("Company delete failed", error);
       setStatus({ type: "error", message: getCompanyErrorMessage(error) });
     }
   };
@@ -180,7 +153,7 @@ export default function CompanyProfilePage() {
   return (
     <div className="space-y-6">
       <section className="glass-card p-4 md:p-6"><div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"><div><p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand-700">Company Profile</p><h2 className="mt-2 text-2xl font-semibold text-slate-900 md:text-3xl lg:text-4xl">Manage every company identity in one place.</h2><p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 md:text-base">Add logos, GSTIN, contact details, and websites for each company. These profiles power invoice and quotation generation throughout the app.</p></div><button type="button" className="btn-primary" onClick={openCreate}>Add Company</button></div>{status ? <div className="mt-6"><StatusAlert type={status.type} message={status.message} /></div> : null}</section>
-      <section>{isLoading ? <div className="glass-card p-6"><LoadingSpinner label="Loading company profiles..." /></div> : companies.length ? <div className="grid gap-5 xl:grid-cols-2">{companies.map((company) => <article key={company.id} className="glass-card p-4 md:p-6"><div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between"><div className="flex gap-4"><div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-slate-100">{company.logoUrl ? <img src={company.logoUrl} alt={company.name} className="h-full w-full rounded-3xl object-cover" /> : <span className="text-2xl font-semibold text-slate-500">{company.name?.[0] || "C"}</span>}</div><div><h3 className="text-xl font-semibold text-slate-900">{company.name}</h3><p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-600 md:text-base">{company.address}</p></div></div><div className="flex gap-3"><button type="button" className="btn-secondary px-4 py-2" onClick={() => { setSelectedCompany(company); setIsModalOpen(true); }}>Edit</button><button type="button" className="btn-danger" onClick={() => remove(company)}>Delete</button></div></div><div className="mt-6 grid gap-4 sm:grid-cols-2"><div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">GSTIN</p><p className="mt-2 text-sm font-medium text-slate-800 md:text-base">{company.gstin || "-"}</p></div><div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Phone</p><p className="mt-2 text-sm font-medium text-slate-800 md:text-base">{company.phone || "-"}</p></div><div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Email</p><p className="mt-2 text-sm font-medium text-slate-800 md:text-base">{company.email || "-"}</p></div><div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Website</p>{company.website ? <a href={formatWebsite(company.website)} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm font-medium text-brand-700 hover:underline md:text-base">{company.website}</a> : <p className="mt-2 text-sm font-medium text-slate-800 md:text-base">-</p>}</div></div></article>)}</div> : <EmptyState title="No companies yet" description="Create your first company profile to unlock invoices, quotations, and branded PDF generation." action={<button type="button" className="btn-primary" onClick={openCreate}>Add Your First Company</button>} />}</section>
+      <section>{isLoading ? <div className="glass-card p-6"><LoadingSpinner label="Loading company profiles..." /></div> : companies.length ? <div className="grid gap-5 xl:grid-cols-2">{companies.map((company) => <article key={company.firebaseId ?? company.id} className="glass-card p-4 md:p-6"><div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between"><div className="flex gap-4"><div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-slate-100">{company.logoBase64 || company.logoUrl ? <img src={company.logoBase64 || company.logoUrl} alt={company.name} className="h-full w-full rounded-3xl object-cover" /> : <span className="text-2xl font-semibold text-slate-500">{company.name?.[0] || "C"}</span>}</div><div><h3 className="text-xl font-semibold text-slate-900">{company.name || "Untitled Company"}</h3><p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-600 md:text-base">{company.address || "-"}</p></div></div><div className="flex gap-3"><button type="button" className="btn-secondary px-4 py-2" onClick={() => { setSelectedCompany(company); setIsModalOpen(true); }}>Edit</button><button type="button" className="btn-danger" onClick={() => remove(company)}>Delete</button></div></div><div className="mt-6 grid gap-4 sm:grid-cols-2"><div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">GSTIN</p><p className="mt-2 text-sm font-medium text-slate-800 md:text-base">{company.gstin || "-"}</p></div><div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Phone</p><p className="mt-2 text-sm font-medium text-slate-800 md:text-base">{company.phone || "-"}</p></div><div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Email</p><p className="mt-2 text-sm font-medium text-slate-800 md:text-base">{company.email || "-"}</p></div><div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Website</p>{company.website ? <a href={formatWebsite(company.website)} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm font-medium text-brand-700 hover:underline md:text-base">{company.website}</a> : <p className="mt-2 text-sm font-medium text-slate-800 md:text-base">-</p>}</div></div></article>)}</div> : <EmptyState title="No companies yet" description="Create your first company profile to unlock invoices, quotations, and branded PDF generation." action={<button type="button" className="btn-primary" onClick={openCreate}>Add Your First Company</button>} />}</section>
       <CompanyFormModal isOpen={isModalOpen} company={selectedCompany} onClose={() => { setIsModalOpen(false); setSelectedCompany(null); }} onSubmit={submit} isSubmitting={isSubmitting} />
     </div>
   );

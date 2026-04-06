@@ -19,9 +19,9 @@ export default function DocumentPreview({ type, invoiceNumber, dueDate, company,
         </div>
 
         <div className="flex flex-col items-end gap-3">
-          {company?.logoUrl ? (
+          {(company?.logoBase64 || company?.logoUrl) ? (
             <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-              <img src={company.logoUrl} alt={company.name} className="h-16 w-16 object-contain" />
+              <img src={company.logoBase64 || company.logoUrl} alt={company.name} className="h-16 w-16 object-contain" />
             </div>
           ) : null}
           <div className="min-w-[236px] rounded-[26px] border border-indigo-100 bg-gradient-to-b from-indigo-50 to-indigo-100/80 px-6 py-5 shadow-sm">

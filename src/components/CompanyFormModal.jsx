@@ -16,6 +16,7 @@ export default function CompanyFormModal({ isOpen, company, onClose, onSubmit, i
 
   const change = (event) => setFormData((current) => ({ ...current, [event.target.name]: event.target.value }));
   const submit = async (event) => { event.preventDefault(); await onSubmit({ ...formData }, logoFile); };
+  const currentLogo = company?.logoBase64 || company?.logoUrl || "";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
@@ -37,7 +38,7 @@ export default function CompanyFormModal({ isOpen, company, onClose, onSubmit, i
           <div className="md:col-span-2">
             <label className="field-label">Logo</label>
             <input type="file" accept="image/*" className="input-field file:mr-4 file:rounded-xl file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:font-semibold file:text-brand-700" onChange={(event) => setLogoFile(event.target.files?.[0] ?? null)} />
-            {company?.logoUrl ? <div className="mt-4 flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4"><img src={company.logoUrl} alt={company.name} className="h-16 w-16 rounded-2xl object-cover" /><p className="text-sm text-slate-600">Current logo will remain until you upload a replacement.</p></div> : null}
+            {currentLogo ? <div className="mt-4 flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4"><img src={currentLogo} alt={company?.name || "Company logo"} className="h-16 w-16 rounded-2xl object-cover" /><p className="text-sm text-slate-600">Current logo will remain until you upload a replacement.</p></div> : null}
           </div>
           <div className="md:col-span-2 flex justify-end gap-3"><button type="button" className="btn-secondary" onClick={onClose}>Cancel</button><button type="submit" className="btn-primary" disabled={isSubmitting}>{isSubmitting ? "Saving..." : company ? "Update & Close" : "Save Company"}</button></div>
         </form>
