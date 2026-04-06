@@ -1,4 +1,4 @@
-const FOOTER_TEXT = "© 2026 Amvika Group. All rights reserved.";
+const FOOTER_TEXT = "\u00A9 2026 Amvika Group. All rights reserved.";
 
 export async function generatePdfBlob(element, filename) {
   const { default: html2pdf } = await import("html2pdf.js");
@@ -7,10 +7,11 @@ export async function generatePdfBlob(element, filename) {
     .set({
       filename,
       margin: [0.24, 0.2, 0.5, 0.2],
-      image: { type: "jpeg", quality: 0.8 },
+      image: { type: "png", quality: 1 },
       html2canvas: {
-        scale: 1,
+        scale: 2,
         useCORS: true,
+        allowTaint: false,
         backgroundColor: "#ffffff",
         logging: false,
       },
@@ -18,7 +19,7 @@ export async function generatePdfBlob(element, filename) {
         unit: "in",
         format: "a4",
         orientation: "portrait",
-        compress: true,
+        compress: false,
       },
       pagebreak: {
         mode: ["css", "legacy"],
