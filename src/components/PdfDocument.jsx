@@ -62,24 +62,35 @@ const styles = {
     ...avoidBreak,
     display: "flex",
     gap: "18px",
-    alignItems: "stretch",
+    alignItems: "flex-start",
     marginTop: "20px",
+  },
+  leftColumn: {
+    ...avoidBreak,
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px",
   },
   wordsBox: {
     ...avoidBreak,
-    flex: 1,
     border: "1px solid #dbe4ff",
     borderRadius: "16px",
     padding: "14px 16px",
     backgroundColor: "#ffffff",
-    minHeight: "100%",
   },
-  blankBox: {
-    marginTop: "14px",
-    minHeight: "96px",
-    border: "1px dashed #cbd5e1",
+  divider: {
+    marginTop: "12px",
+    borderTop: "1px solid #e2e8f0",
+    paddingTop: "14px",
+  },
+  termsCard: {
+    ...avoidBreak,
+    border: "1px solid #e2e8f0",
     borderRadius: "16px",
+    padding: "14px 16px",
     backgroundColor: "#ffffff",
+    minHeight: "120px",
   },
   totals: {
     ...avoidBreak,
@@ -96,17 +107,12 @@ const styles = {
     padding: "9px 14px",
     borderBottom: "1px solid #e2e8f0",
   },
-  notesRow: {
+  notesSection: {
     ...avoidBreak,
-    display: "flex",
-    justifyContent: "space-between",
-    gap: "20px",
-    alignItems: "stretch",
     marginTop: "20px",
   },
   notesCard: {
     ...avoidBreak,
-    width: "48%",
     border: "1px solid #e2e8f0",
     borderRadius: "16px",
     padding: "14px 16px",
@@ -184,10 +190,15 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
       </div>
 
       <div style={styles.summaryRow}>
-        <div style={styles.wordsBox}>
-          <div style={styles.label}>Total In Words</div>
-          <div style={{ marginTop: "10px", fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>{englishAmountInWords}</div>
-          <div style={styles.blankBox} />
+        <div style={styles.leftColumn}>
+          <div style={styles.wordsBox}>
+            <div style={styles.label}>Total In Words</div>
+            <div style={{ marginTop: "10px", fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>{englishAmountInWords}</div>
+            <div style={styles.divider}>
+              <div style={styles.label}>Terms & Conditions</div>
+              <div style={{ marginTop: "8px", whiteSpace: "pre-line", color: "#475569" }}>{terms || "-"}</div>
+            </div>
+          </div>
         </div>
 
         <div style={styles.totals}>
@@ -205,14 +216,10 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
         </div>
       </div>
 
-      <div style={styles.notesRow}>
+      <div style={styles.notesSection}>
         <div style={styles.notesCard}>
           <div style={styles.label}>Notes</div>
           <div style={{ marginTop: "8px", whiteSpace: "pre-line", color: "#475569" }}>{notes || "-"}</div>
-        </div>
-        <div style={styles.notesCard}>
-          <div style={styles.label}>Terms & Conditions</div>
-          <div style={{ marginTop: "8px", whiteSpace: "pre-line", color: "#475569" }}>{terms || "-"}</div>
         </div>
       </div>
     </div>

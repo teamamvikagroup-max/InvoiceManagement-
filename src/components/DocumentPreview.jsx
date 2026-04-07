@@ -73,11 +73,14 @@ export default function DocumentPreview({ type, invoiceNumber, dueDate, company,
         </table>
       </div>
 
-      <div className="mt-7 grid grid-cols-[minmax(0,1fr)_340px] gap-5">
+      <div className="mt-7 grid grid-cols-[minmax(0,1fr)_340px] items-start gap-5">
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Total In Words</p>
           <p className="mt-3 text-sm font-semibold text-slate-900">{englishAmountInWords}</p>
-          <div className="mt-4 h-24 rounded-2xl border border-dashed border-slate-300 bg-slate-50/70" />
+          <div className="mt-4 border-t border-slate-200 pt-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Terms & Conditions</p>
+            <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-600">{terms || "-"}</p>
+          </div>
         </div>
 
         <div className="overflow-hidden rounded-3xl border border-indigo-100 bg-slate-50">
@@ -95,15 +98,9 @@ export default function DocumentPreview({ type, invoiceNumber, dueDate, company,
         </div>
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-6">
-        <div className="rounded-3xl border border-slate-200 bg-white p-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Notes</p>
-          <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-600">{notes || "-"}</p>
-        </div>
-        <div className="rounded-3xl border border-slate-200 bg-white p-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Terms & Conditions</p>
-          <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-600">{terms || "-"}</p>
-        </div>
+      <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Notes</p>
+        <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-600">{notes || "-"}</p>
       </div>
     </div>
   );
