@@ -3,6 +3,7 @@ import { formatAmountInWordsEnglish, formatDate, formatWebsite } from "../utils/
 
 export default function DocumentPreview({ type, invoiceNumber, dueDate, company, customer, items, totals, notes, terms, taxType }) {
   const englishAmountInWords = formatAmountInWordsEnglish(totals.totalAmount);
+  const logoSrc = company?.logoUrl || company?.logoBase64 || "";
 
   return (
     <div className="w-[794px] bg-white px-9 pb-14 pt-8 font-['Noto_Sans','Noto_Sans_Devanagari','Arial',sans-serif] text-slate-900">
@@ -18,13 +19,21 @@ export default function DocumentPreview({ type, invoiceNumber, dueDate, company,
           </div>
         </div>
 
-        <div className="flex flex-col items-end gap-3">
-          {(company?.logoBase64 || company?.logoUrl) ? (
-            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-              <img src={company.logoBase64 || company.logoUrl} alt={company.name} className="h-16 w-16 object-contain" />
-            </div>
-          ) : null}
-          <div className="min-w-[236px] rounded-[26px] border border-indigo-100 bg-gradient-to-b from-indigo-50 to-indigo-100/80 px-6 py-5 shadow-sm">
+        <div className="flex w-[248px] flex-shrink-0 justify-end">
+          <div className="flex min-h-[82px] w-full items-start justify-end">
+            {logoSrc ? (
+              <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
+                <img src={logoSrc} alt={company?.name || "Company logo"} className="block h-[58px] w-auto max-w-[150px] object-contain" />
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 flex justify-between">
+        <div className="flex-1" />
+        <div className="w-[248px] flex-shrink-0">
+          <div className="rounded-2xl border border-indigo-100 bg-gradient-to-b from-indigo-50 to-indigo-100/80 px-6 py-5 shadow-[0_12px_28px_rgba(99,102,241,0.12)]">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">{type === "invoice" ? "Tax Invoice" : "Quotation"}</p>
             <p className="mt-3 text-2xl font-semibold text-slate-900">{invoiceNumber}</p>
             <div className="mt-4 space-y-2 text-sm text-slate-700">

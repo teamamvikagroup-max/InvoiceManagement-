@@ -32,13 +32,33 @@ const styles = {
     color: "#64748b",
     fontWeight: 700,
   },
+  rightColumn: {
+    width: "248px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-end",
+    flexShrink: 0,
+  },
+  logoArea: {
+    width: "100%",
+    minHeight: "82px",
+    display: "flex",
+    justifyContent: "flex-end",
+    alignItems: "flex-start",
+  },
+  logoFrame: {
+    border: "1px solid #dbe4ff",
+    borderRadius: "14px",
+    padding: "10px 12px",
+    backgroundColor: "#ffffff",
+  },
   titleBox: {
     border: "1px solid #dbe4ff",
     background: "linear-gradient(180deg, #eef2ff 0%, #e0e7ff 100%)",
     borderRadius: "16px",
     padding: "14px 16px",
-    minWidth: "236px",
-    boxShadow: "0 10px 25px rgba(99, 102, 241, 0.08)",
+    width: "100%",
+    boxShadow: "0 12px 28px rgba(99, 102, 241, 0.12)",
   },
   table: {
     width: "100%",
@@ -84,14 +104,6 @@ const styles = {
     borderTop: "1px solid #e2e8f0",
     paddingTop: "14px",
   },
-  termsCard: {
-    ...avoidBreak,
-    border: "1px solid #e2e8f0",
-    borderRadius: "16px",
-    padding: "14px 16px",
-    backgroundColor: "#ffffff",
-    minHeight: "120px",
-  },
   totals: {
     ...avoidBreak,
     width: "340px",
@@ -123,6 +135,7 @@ const styles = {
 
 export default function PdfDocument({ type, invoiceNumber, dueDate, company, customer, items, totals, notes, terms, taxType }) {
   const englishAmountInWords = formatAmountInWordsEnglish(totals.totalAmount);
+  const logoSrc = company?.logoUrl || company?.logoBase64 || "";
 
   return (
     <div style={styles.page}>
@@ -136,12 +149,20 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
           <div style={{ color: "#475569" }}>Website: {company?.website ? formatWebsite(company.website) : "-"}</div>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "12px", ...avoidBreak }}>
-          {(company?.logoBase64 || company?.logoUrl) ? (
-            <div style={{ border: "1px solid #dbe4ff", borderRadius: "14px", padding: "10px", backgroundColor: "#ffffff" }}>
-              <img src={company.logoBase64 || company.logoUrl} alt={company.name} style={{ height: "60px", width: "60px", objectFit: "contain" }} crossOrigin="anonymous" />
-            </div>
-          ) : null}
+        <div style={{ ...styles.rightColumn, ...avoidBreak }}>
+          <div style={styles.logoArea}>
+            {logoSrc ? (
+              <div style={styles.logoFrame}>
+                <img src={logoSrc} alt={company?.name || "Company logo"} style={{ height: "58px", width: "auto", maxWidth: "150px", objectFit: "contain", display: "block" }} crossOrigin="anonymous" />
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: "16px", ...avoidBreak }}>
+        <div style={{ flex: 1 }} />
+        <div style={styles.rightColumn}>
           <div style={styles.titleBox}>
             <div style={{ fontSize: "11px", letterSpacing: "0.14em", textTransform: "uppercase", color: "#4338ca", fontWeight: 700 }}>
               {type === "invoice" ? "Tax Invoice" : "Quotation"}
