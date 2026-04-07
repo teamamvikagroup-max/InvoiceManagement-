@@ -1,8 +1,8 @@
+import html2pdf from "html2pdf.js";
+
 const FOOTER_TEXT = "\u00A9 2026 Amvika Group. All rights reserved.";
 
 export async function generatePdfBlob(element, filename) {
-  const { default: html2pdf } = await import("html2pdf.js");
-
   const worker = html2pdf()
     .set({
       filename,
