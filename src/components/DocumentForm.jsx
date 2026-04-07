@@ -17,6 +17,23 @@ import ItemsTable from "./ItemsTable";
 import PdfDocument from "./PdfDocument";
 import StatusAlert from "./StatusAlert";
 
+function waitForImageLoad(src) {
+  if (!src) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = () => resolve();
+    image.onerror = () => resolve();
+    image.src = src;
+
+    if (image.complete) {
+      resolve();
+    }
+  });
+}
 function createInitialFormData() {
   return {
     companyId: "",

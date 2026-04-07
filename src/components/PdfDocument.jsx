@@ -60,6 +60,18 @@ const styles = {
     width: "100%",
     boxShadow: "0 12px 28px rgba(99, 102, 241, 0.12)",
   },
+  billSummaryRow: {
+    ...avoidBreak,
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "20px",
+    alignItems: "flex-start",
+    marginTop: "16px",
+  },
+  billColumn: {
+    flex: 1,
+    minWidth: 0,
+  },
   table: {
     width: "100%",
     borderCollapse: "collapse",
@@ -137,6 +149,8 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
   const englishAmountInWords = formatAmountInWordsEnglish(totals.totalAmount);
   const logoSrc = company?.logoUrl || company?.logoBase64 || "";
 
+  console.log("PDF company logoUrl", company?.logoUrl);
+
   return (
     <div style={styles.page}>
       <div style={{ ...styles.row, borderBottom: "1px solid #cbd5e1", paddingBottom: "18px" }}>
@@ -153,15 +167,27 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
           <div style={styles.logoArea}>
             {logoSrc ? (
               <div style={styles.logoFrame}>
-                <img src={logoSrc} alt={company?.name || "Company logo"} style={{ height: "58px", width: "auto", maxWidth: "150px", objectFit: "contain", display: "block" }} crossOrigin="anonymous" />
+                <img src={logoSrc} alt={company?.name || "Company logo"} style={{ height: "60px", width: "auto", maxWidth: "150px", objectFit: "contain", display: "block" }} crossOrigin="anonymous" />
               </div>
-            ) : null}
+            ) : (
+              <div style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a" }}>{company?.name || "Company"}</div>
+            )}
           </div>
         </div>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: "16px", ...avoidBreak }}>
-        <div style={{ flex: 1 }} />
+      <div style={styles.billSummaryRow}>
+        <div style={styles.billColumn}>
+          <div style={styles.label}>Bill To</div>
+          <div style={{ fontSize: "20px", fontWeight: 700, marginTop: "8px" }}>{customer.name || "-"}</div>
+          <div style={{ marginTop: "6px", whiteSpace: "pre-line", color: "#475569" }}>{customer.address || "-"}</div>
+          <div style={{ marginTop: "8px", color: "#475569" }}>Phone: {customer.phone || "-"}</div>
+          <div style={{ color: "#475569" }}>Email: {customer.email || "-"}</div>
+          <div style={{ color: "#475569" }}>Zip Code: {customer.zipCode || "-"}</div>
+          <div style={{ color: "#475569" }}>Place of Supply: {customer.placeOfSupply || "-"}</div>
+          <div style={{ color: "#475569" }}>GSTIN: {customer.gstin || "-"}</div>
+        </div>
+
         <div style={styles.rightColumn}>
           <div style={styles.titleBox}>
             <div style={{ fontSize: "11px", letterSpacing: "0.14em", textTransform: "uppercase", color: "#4338ca", fontWeight: 700 }}>
@@ -172,17 +198,6 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
             <div style={{ color: "#334155" }}>Tax Mode: {taxType === "igst" ? "IGST 18%" : "CGST 9% + SGST 9%"}</div>
           </div>
         </div>
-      </div>
-
-      <div style={styles.section}>
-        <div style={styles.label}>Bill To</div>
-        <div style={{ fontSize: "20px", fontWeight: 700, marginTop: "8px" }}>{customer.name || "-"}</div>
-        <div style={{ marginTop: "6px", whiteSpace: "pre-line", color: "#475569" }}>{customer.address || "-"}</div>
-        <div style={{ marginTop: "8px", color: "#475569" }}>Phone: {customer.phone || "-"}</div>
-        <div style={{ color: "#475569" }}>Email: {customer.email || "-"}</div>
-        <div style={{ color: "#475569" }}>Zip Code: {customer.zipCode || "-"}</div>
-        <div style={{ color: "#475569" }}>Place of Supply: {customer.placeOfSupply || "-"}</div>
-        <div style={{ color: "#475569" }}>GSTIN: {customer.gstin || "-"}</div>
       </div>
 
       <div style={{ ...styles.section, ...avoidBreak }}>

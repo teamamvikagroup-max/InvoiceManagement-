@@ -23,15 +23,29 @@ export default function DocumentPreview({ type, invoiceNumber, dueDate, company,
           <div className="flex min-h-[82px] w-full items-start justify-end">
             {logoSrc ? (
               <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-                <img src={logoSrc} alt={company?.name || "Company logo"} className="block h-[58px] w-auto max-w-[150px] object-contain" />
+                <img src={logoSrc} alt={company?.name || "Company logo"} className="block h-[60px] w-auto max-w-[150px] object-contain" />
               </div>
-            ) : null}
+            ) : (
+              <div className="text-right text-base font-bold text-slate-900">{company?.name || "Company"}</div>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="mt-4 flex justify-between">
-        <div className="flex-1" />
+      <div className="mt-4 flex items-start justify-between gap-5">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Bill To</p>
+          <h2 className="mt-3 text-xl font-semibold">{customer.name || "-"}</h2>
+          <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">{customer.address || "-"}</p>
+          <div className="mt-4 space-y-1 text-sm text-slate-600">
+            <p>Phone: {customer.phone || "-"}</p>
+            <p>Email: {customer.email || "-"}</p>
+            <p>Zip Code: {customer.zipCode || "-"}</p>
+            <p>Place of Supply: {customer.placeOfSupply || "-"}</p>
+            <p>GSTIN: {customer.gstin || "-"}</p>
+          </div>
+        </div>
+
         <div className="w-[248px] flex-shrink-0">
           <div className="rounded-2xl border border-indigo-100 bg-gradient-to-b from-indigo-50 to-indigo-100/80 px-6 py-5 shadow-[0_12px_28px_rgba(99,102,241,0.12)]">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">{type === "invoice" ? "Tax Invoice" : "Quotation"}</p>
@@ -41,19 +55,6 @@ export default function DocumentPreview({ type, invoiceNumber, dueDate, company,
               <p>Tax Mode: {taxType === "igst" ? "IGST 18%" : "CGST 9% + SGST 9%"}</p>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div className="mt-7">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Bill To</p>
-        <h2 className="mt-3 text-xl font-semibold">{customer.name || "-"}</h2>
-        <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">{customer.address || "-"}</p>
-        <div className="mt-4 space-y-1 text-sm text-slate-600">
-          <p>Phone: {customer.phone || "-"}</p>
-          <p>Email: {customer.email || "-"}</p>
-          <p>Zip Code: {customer.zipCode || "-"}</p>
-          <p>Place of Supply: {customer.placeOfSupply || "-"}</p>
-          <p>GSTIN: {customer.gstin || "-"}</p>
         </div>
       </div>
 
