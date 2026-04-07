@@ -8,10 +8,11 @@ import {
   set,
   update,
 } from "firebase/database";
-import { deleteObject, getDownloadURL, ref as storageRef, uploadBytesResumable } from "firebase/storage";
+import { deleteObject, getDownloadURL, ref as storageRef, uploadBytes } from "firebase/storage";
 import { assertDatabaseConfigured, assertStorageConfigured } from "./config";
 
 const PDF_UPLOAD_TIMEOUT_MS = 90000;
+const DATABASE_WRITE_TIMEOUT_MS = 20000;
 const FILE_URL_TIMEOUT_MS = 20000;
 const LOGO_UPLOAD_TIMEOUT_MS = 30000;
 
@@ -147,35 +148,15 @@ function withTimeout(promise, timeoutMs, message) {
   });
 }
 
-function uploadBlobResumable(fileRef, blob, metadata, timeoutMs, options = {}) {
+async function uploadBlob(fileRef, blob, metadata, timeoutMs, options = {}) {
   const {
     timeoutMessage = "Upload timed out.",
     progressLabel = "Upload progress",
   } = options;
 
-  return new Promise((resolve, reject) => {
-    const uploadTask = uploadBytesResumable(fileRef, blob, metadata);
-    const timer = setTimeout(() => {
-      uploadTask.cancel();
-      reject(new Error(timeoutMessage));
-    }, timeoutMs);
-
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        const progress = snapshot.totalBytes ? Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100) : 0;
-        console.info(progressLabel, progress);
-      },
-      (error) => {
-        clearTimeout(timer);
-        reject(error);
-      },
-      () => {
-        clearTimeout(timer);
-        resolve();
-      },
-    );
-  });
+  console.info(progressLabel, "started");
+  await withTimeout(uploadBytes(fileRef, blob, metadata), timeoutMs, timeoutMessage);
+  console.info(progressLabel, "completed");
 }
 
 export async function uploadCompanyLogo(companyId, file) {
@@ -196,7 +177,7 @@ export async function uploadCompanyLogo(companyId, file) {
   const logoPath = `company-logos/${companyId}/${safeFilename}`;
   const logoReference = storageRef(storage, logoPath);
 
-  await uploadBlobResumable(
+  await uploadBlob(
     logoReference,
     file,
     { contentType: file.type || "application/octet-stream" },
@@ -247,22 +228,26 @@ export async function createCompany(payload) {
     updatedAt: Date.now(),
   };
 
-  await set(companyReference, companyData);
+  await withTimeout(set(companyReference, companyData), DATABASE_WRITE_TIMEOUT_MS, "Saving company data timed out.");
   return { id: companyId, firebaseId: companyId };
 }
 
 export async function updateCompany(companyId, payload) {
-  await update(databaseRef(`companies/${companyId}`), {
-    name: payload.name ?? "",
-    address: payload.address ?? "",
-    email: payload.email ?? "",
-    gstin: payload.gstin ?? "",
-    phone: payload.phone ?? "",
-    website: payload.website ?? "",
-    logoUrl: payload.logoUrl ?? "",
-    logoPath: payload.logoPath ?? "",
-    updatedAt: Date.now(),
-  });
+  await withTimeout(
+    update(databaseRef(`companies/${companyId}`), {
+      name: payload.name ?? "",
+      address: payload.address ?? "",
+      email: payload.email ?? "",
+      gstin: payload.gstin ?? "",
+      phone: payload.phone ?? "",
+      website: payload.website ?? "",
+      logoUrl: payload.logoUrl ?? "",
+      logoPath: payload.logoPath ?? "",
+      updatedAt: Date.now(),
+    }),
+    DATABASE_WRITE_TIMEOUT_MS,
+    "Updating company data timed out.",
+  );
 }
 
 export async function deleteCompany(company) {
@@ -297,7 +282,7 @@ export async function uploadDocumentPdf(type, documentNumber, blob) {
   const pdfPath = `${folder}/${documentNumber}_${timestamp}.pdf`;
   const pdfReference = storageRef(storage, pdfPath);
 
-  await uploadBlobResumable(pdfReference, blob, { contentType: "application/pdf" }, PDF_UPLOAD_TIMEOUT_MS, {
+  await uploadBlob(pdfReference, blob, { contentType: "application/pdf" }, PDF_UPLOAD_TIMEOUT_MS, {
     timeoutMessage: `${type === "invoice" ? "Invoice" : "Quotation"} PDF upload timed out.`,
     progressLabel: `${type === "invoice" ? "Invoice" : "Quotation"} PDF upload progress`,
   });
@@ -349,7 +334,11 @@ export async function saveInvoiceRecord(payload) {
     documentData.status = payload.status ?? "pending";
   }
 
-  await set(documentReference, documentData);
+  await withTimeout(
+    set(documentReference, documentData),
+    DATABASE_WRITE_TIMEOUT_MS,
+    `Saving ${payload.type === "invoice" ? "invoice" : "quotation"} data timed out.`,
+  );
 
   return { id: documentId, companyId: payload.companyId, type: payload.type };
 }
