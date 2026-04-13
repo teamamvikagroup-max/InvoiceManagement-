@@ -50,12 +50,17 @@ async function waitForImages(container) {
     images.map(
       (image) =>
         new Promise((resolve) => {
-          if (image.complete && image.naturalWidth > 0) {
+          if (image.complete) {
             resolve();
             return;
           }
 
+          let timer = null;
+
           const cleanup = () => {
+            if (timer) {
+              window.clearTimeout(timer);
+            }
             image.removeEventListener("load", handleDone);
             image.removeEventListener("error", handleDone);
           };
@@ -64,6 +69,11 @@ async function waitForImages(container) {
             cleanup();
             resolve();
           };
+
+          timer = window.setTimeout(() => {
+            console.warn("[PDF Export] image wait timed out", image.currentSrc || image.src);
+            handleDone();
+          }, 2500);
 
           image.addEventListener("load", handleDone, { once: true });
           image.addEventListener("error", handleDone, { once: true });
@@ -268,5 +278,6 @@ export default function DocumentForm({ type, companies }) {
     </>
   );
 }
+
 
 
