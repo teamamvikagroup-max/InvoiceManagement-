@@ -1,5 +1,5 @@
 import { formatCurrency } from "../utils/calculations";
-import { formatAmountInWordsEnglish, formatDate, formatWebsite } from "../utils/formatters";
+import { formatAmountInWordsEnglish, formatAmountInWordsHindi, formatDate, formatWebsite } from "../utils/formatters";
 
 const avoidBreak = {
   breakInside: "avoid",
@@ -11,10 +11,10 @@ const styles = {
     width: "794px",
     backgroundColor: "#ffffff",
     color: "#0f172a",
-    fontFamily: '"Noto Sans", "Noto Sans Devanagari", Arial, sans-serif',
+    fontFamily: '"Noto Sans", "Noto Sans Devanagari", "Segoe UI Symbol", "Arial Unicode MS", Arial, sans-serif',
     fontSize: "12px",
-    lineHeight: 1.45,
-    padding: "26px 28px 52px",
+    lineHeight: 1.42,
+    padding: "24px 28px 62px",
   },
   headerRow: {
     display: "flex",
@@ -22,7 +22,7 @@ const styles = {
     gap: "20px",
     alignItems: "flex-start",
     borderBottom: "1px solid #cbd5e1",
-    paddingBottom: "18px",
+    paddingBottom: "16px",
   },
   rightColumn: {
     width: "248px",
@@ -33,7 +33,7 @@ const styles = {
   },
   logoArea: {
     width: "100%",
-    minHeight: "82px",
+    minHeight: "78px",
     display: "flex",
     justifyContent: "flex-end",
     alignItems: "flex-start",
@@ -41,7 +41,7 @@ const styles = {
   logoFrame: {
     border: "1px solid #dbe4ff",
     borderRadius: "14px",
-    padding: "10px 12px",
+    padding: "8px 10px",
     backgroundColor: "#ffffff",
   },
   billSummaryRow: {
@@ -50,7 +50,7 @@ const styles = {
     justifyContent: "space-between",
     gap: "20px",
     alignItems: "flex-start",
-    marginTop: "18px",
+    marginTop: "16px",
   },
   billColumn: {
     flex: 1,
@@ -72,18 +72,18 @@ const styles = {
     boxShadow: "0 12px 28px rgba(99, 102, 241, 0.12)",
   },
   section: {
-    marginTop: "20px",
+    marginTop: "18px",
   },
   table: {
     width: "100%",
     borderCollapse: "collapse",
-    marginTop: "12px",
+    marginTop: "10px",
     borderRadius: "16px",
     overflow: "hidden",
   },
   cell: {
     border: "1px solid #dbe4ff",
-    padding: "9px 10px",
+    padding: "8px 10px",
     textAlign: "left",
     verticalAlign: "top",
   },
@@ -97,14 +97,14 @@ const styles = {
     display: "flex",
     gap: "18px",
     alignItems: "flex-start",
-    marginTop: "20px",
+    marginTop: "18px",
   },
   leftColumn: {
     ...avoidBreak,
     flex: 1,
     display: "flex",
     flexDirection: "column",
-    gap: "16px",
+    gap: "14px",
   },
   wordsBox: {
     ...avoidBreak,
@@ -116,7 +116,7 @@ const styles = {
   divider: {
     marginTop: "12px",
     borderTop: "1px solid #e2e8f0",
-    paddingTop: "14px",
+    paddingTop: "12px",
   },
   totals: {
     ...avoidBreak,
@@ -133,25 +133,37 @@ const styles = {
     padding: "9px 14px",
     borderBottom: "1px solid #e2e8f0",
   },
-  notesSection: {
+  notesRow: {
     ...avoidBreak,
-    marginTop: "20px",
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "18px",
+    alignItems: "flex-start",
+    marginTop: "18px",
   },
   notesCard: {
     ...avoidBreak,
+    width: "68%",
     border: "1px solid #e2e8f0",
     borderRadius: "16px",
     padding: "14px 16px",
     backgroundColor: "#ffffff",
-    minHeight: "120px",
+  },
+  secondaryCard: {
+    ...avoidBreak,
+    width: "32%",
+    border: "1px solid #e2e8f0",
+    borderRadius: "16px",
+    padding: "14px 16px",
+    backgroundColor: "#f8fafc",
+    minHeight: "88px",
   },
 };
 
 export default function PdfDocument({ type, invoiceNumber, dueDate, company, customer, items, totals, notes, terms, taxType }) {
   const englishAmountInWords = formatAmountInWordsEnglish(totals.totalAmount);
+  const hindiAmountInWords = formatAmountInWordsHindi(totals.totalAmount);
   const logoSrc = company?.logoUrl || "";
-
-  console.log("PDF company logoUrl", company?.logoUrl);
 
   return (
     <div style={styles.page}>
@@ -232,6 +244,7 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
           <div style={styles.wordsBox}>
             <div style={styles.label}>Total In Words</div>
             <div style={{ marginTop: "10px", fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>{englishAmountInWords}</div>
+            <div style={{ marginTop: "6px", fontSize: "13px", color: "#334155", fontFamily: '"Noto Sans Devanagari", "Noto Sans", sans-serif' }}>{hindiAmountInWords}</div>
             <div style={styles.divider}>
               <div style={styles.label}>Terms & Conditions</div>
               <div style={{ marginTop: "8px", whiteSpace: "pre-line", color: "#475569" }}>{terms || "-"}</div>
@@ -254,10 +267,14 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
         </div>
       </div>
 
-      <div style={styles.notesSection}>
+      <div style={styles.notesRow}>
         <div style={styles.notesCard}>
           <div style={styles.label}>Notes</div>
           <div style={{ marginTop: "8px", whiteSpace: "pre-line", color: "#475569" }}>{notes || "-"}</div>
+        </div>
+        <div style={styles.secondaryCard}>
+          <div style={styles.label}>Reference</div>
+          <div style={{ marginTop: "8px", color: "#64748b" }}>Reserved for internal remarks, stamp, or future metadata.</div>
         </div>
       </div>
     </div>
