@@ -1,13 +1,13 @@
 import html2pdf from "html2pdf.js";
 
-const FOOTER_TEXT = "© 2026 Amvika Group. All rights reserved.";
+const FOOTER_TEXT = "\u00A9 2026 Amvika Group. All rights reserved.";
 const LEGAL_TEXT = "This is a system-generated electronic invoice and does not require a physical signature.";
 
 export async function generatePdfBlob(element, filename) {
   const worker = html2pdf()
     .set({
       filename,
-      margin: [0.24, 0.2, 0.72, 0.2],
+      margin: [0.24, 0.2, 0.9, 0.2],
       image: { type: "png", quality: 1 },
       html2canvas: {
         scale: 2,
@@ -39,11 +39,11 @@ export async function generatePdfBlob(element, filename) {
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(8);
     pdf.setTextColor(100, 116, 139);
-    pdf.text(FOOTER_TEXT, pageWidth / 2, pageHeight - 0.34, { align: "center" });
-    pdf.setFontSize(7.4);
-    pdf.text(LEGAL_TEXT, pageWidth / 2, pageHeight - 0.2, { align: "center", maxWidth: pageWidth - 1.4 });
+    pdf.text(FOOTER_TEXT, pageWidth / 2, pageHeight - 0.48, { align: "center" });
+    pdf.setFontSize(7.3);
+    pdf.text(LEGAL_TEXT, pageWidth / 2, pageHeight - 0.3, { align: "center", maxWidth: pageWidth - 1.5 });
     pdf.setFontSize(8);
-    pdf.text(`Page ${pageNumber} of ${pageCount}`, pageWidth - 0.2, pageHeight - 0.34, { align: "right" });
+    pdf.text(`Page ${pageNumber} of ${pageCount}`, pageWidth - 0.2, pageHeight - 0.48, { align: "right" });
   }
 
   return pdf.output("blob");

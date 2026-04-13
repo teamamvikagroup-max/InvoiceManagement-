@@ -6,6 +6,15 @@ const avoidBreak = {
   pageBreakInside: "avoid",
 };
 
+function getHeadingStyle(value, baseSize, compactSize) {
+  return {
+    fontSize: value && value.length > 28 ? compactSize : baseSize,
+    fontWeight: 700,
+    overflowWrap: "anywhere",
+    wordBreak: "break-word",
+  };
+}
+
 const styles = {
   page: {
     width: "794px",
@@ -14,18 +23,22 @@ const styles = {
     fontFamily: '"Noto Sans", "Noto Sans Devanagari", "Segoe UI Symbol", "Arial Unicode MS", Arial, sans-serif',
     fontSize: "12px",
     lineHeight: 1.42,
-    padding: "24px 28px 62px",
+    padding: "24px 28px 86px",
   },
   headerRow: {
     display: "flex",
     justifyContent: "space-between",
-    gap: "20px",
+    gap: "24px",
     alignItems: "flex-start",
     borderBottom: "1px solid #cbd5e1",
-    paddingBottom: "16px",
+    paddingBottom: "18px",
+  },
+  detailsColumn: {
+    maxWidth: "450px",
+    minWidth: 0,
   },
   rightColumn: {
-    width: "248px",
+    width: "268px",
     display: "flex",
     flexDirection: "column",
     alignItems: "flex-end",
@@ -33,22 +46,23 @@ const styles = {
   },
   logoArea: {
     width: "100%",
-    minHeight: "78px",
+    minHeight: "98px",
     display: "flex",
     justifyContent: "flex-end",
     alignItems: "flex-start",
   },
   logoFrame: {
     border: "1px solid #dbe4ff",
-    borderRadius: "14px",
-    padding: "8px 10px",
+    borderRadius: "16px",
+    padding: "10px 12px",
     backgroundColor: "#ffffff",
+    boxShadow: "0 10px 22px rgba(15, 23, 42, 0.06)",
   },
   billSummaryRow: {
     ...avoidBreak,
     display: "flex",
     justifyContent: "space-between",
-    gap: "20px",
+    gap: "24px",
     alignItems: "flex-start",
     marginTop: "16px",
   },
@@ -69,7 +83,8 @@ const styles = {
     borderRadius: "16px",
     padding: "14px 16px",
     width: "100%",
-    boxShadow: "0 12px 28px rgba(99, 102, 241, 0.12)",
+    marginTop: "6px",
+    boxShadow: "0 14px 28px rgba(99, 102, 241, 0.12)",
   },
   section: {
     marginTop: "18px",
@@ -146,7 +161,7 @@ const styles = {
     width: "68%",
     border: "1px solid #e2e8f0",
     borderRadius: "16px",
-    padding: "14px 16px",
+    padding: "12px 14px",
     backgroundColor: "#ffffff",
   },
   secondaryCard: {
@@ -154,34 +169,34 @@ const styles = {
     width: "32%",
     border: "1px solid #e2e8f0",
     borderRadius: "16px",
-    padding: "14px 16px",
+    padding: "12px 14px",
     backgroundColor: "#f8fafc",
-    minHeight: "88px",
+    minHeight: "84px",
   },
 };
 
 export default function PdfDocument({ type, invoiceNumber, dueDate, company, customer, items, totals, notes, terms, taxType }) {
   const englishAmountInWords = formatAmountInWordsEnglish(totals.totalAmount);
   const hindiAmountInWords = formatAmountInWordsHindi(totals.totalAmount);
-  const logoSrc = company?.logoUrl || "";
+  const logoSrc = company?.logoUrl || company?.logoBase64 || "";
 
   return (
     <div style={styles.page}>
       <div style={styles.headerRow}>
-        <div style={{ maxWidth: "430px" }}>
-          <div style={{ fontSize: "28px", fontWeight: 700 }}>{company?.name || "Company Name"}</div>
-          <div style={{ marginTop: "8px", whiteSpace: "pre-line", color: "#475569" }}>{company?.address || "-"}</div>
-          <div style={{ marginTop: "10px", color: "#475569" }}>GSTIN: {company?.gstin || "-"}</div>
-          <div style={{ color: "#475569" }}>Phone: {company?.phone || "-"}</div>
-          <div style={{ color: "#475569" }}>Email: {company?.email || "-"}</div>
-          <div style={{ color: "#475569" }}>Website: {company?.website ? formatWebsite(company.website) : "-"}</div>
+        <div style={styles.detailsColumn}>
+          <div style={getHeadingStyle(company?.name, "28px", "24px")}>{company?.name || "Company Name"}</div>
+          <div style={{ marginTop: "8px", whiteSpace: "pre-line", color: "#475569", overflowWrap: "anywhere" }}>{company?.address || "-"}</div>
+          <div style={{ marginTop: "10px", color: "#475569", overflowWrap: "anywhere" }}>GSTIN: {company?.gstin || "-"}</div>
+          <div style={{ color: "#475569", overflowWrap: "anywhere" }}>Phone: {company?.phone || "-"}</div>
+          <div style={{ color: "#475569", overflowWrap: "anywhere" }}>Email: {company?.email || "-"}</div>
+          <div style={{ color: "#475569", overflowWrap: "anywhere" }}>Website: {company?.website ? formatWebsite(company.website) : "-"}</div>
         </div>
 
         <div style={{ ...styles.rightColumn, ...avoidBreak }}>
           <div style={styles.logoArea}>
             {logoSrc ? (
               <div style={styles.logoFrame}>
-                <img src={logoSrc} alt={company?.name || "Company logo"} style={{ height: "60px", width: "auto", maxWidth: "150px", objectFit: "contain", display: "block" }} crossOrigin="anonymous" />
+                <img src={logoSrc} alt={company?.name || "Company logo"} style={{ height: "68px", width: "auto", maxWidth: "170px", objectFit: "contain", display: "block" }} crossOrigin="anonymous" />
               </div>
             ) : (
               <div style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a" }}>{company?.name || "Company"}</div>
@@ -193,13 +208,13 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
       <div style={styles.billSummaryRow}>
         <div style={styles.billColumn}>
           <div style={styles.label}>Bill To</div>
-          <div style={{ fontSize: "20px", fontWeight: 700, marginTop: "8px" }}>{customer.name || "-"}</div>
-          <div style={{ marginTop: "6px", whiteSpace: "pre-line", color: "#475569" }}>{customer.address || "-"}</div>
-          <div style={{ marginTop: "8px", color: "#475569" }}>Phone: {customer.phone || "-"}</div>
-          <div style={{ color: "#475569" }}>Email: {customer.email || "-"}</div>
-          <div style={{ color: "#475569" }}>Zip Code: {customer.zipCode || "-"}</div>
-          <div style={{ color: "#475569" }}>Place of Supply: {customer.placeOfSupply || "-"}</div>
-          <div style={{ color: "#475569" }}>GSTIN: {customer.gstin || "-"}</div>
+          <div style={getHeadingStyle(customer?.name, "20px", "18px")}>{customer.name || "-"}</div>
+          <div style={{ marginTop: "6px", whiteSpace: "pre-line", color: "#475569", overflowWrap: "anywhere" }}>{customer.address || "-"}</div>
+          <div style={{ marginTop: "8px", color: "#475569", overflowWrap: "anywhere" }}>Phone: {customer.phone || "-"}</div>
+          <div style={{ color: "#475569", overflowWrap: "anywhere" }}>Email: {customer.email || "-"}</div>
+          <div style={{ color: "#475569", overflowWrap: "anywhere" }}>Zip Code: {customer.zipCode || "-"}</div>
+          <div style={{ color: "#475569", overflowWrap: "anywhere" }}>Place of Supply: {customer.placeOfSupply || "-"}</div>
+          <div style={{ color: "#475569", overflowWrap: "anywhere" }}>GSTIN: {customer.gstin || "-"}</div>
         </div>
 
         <div style={styles.rightColumn}>
@@ -207,7 +222,7 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
             <div style={{ fontSize: "11px", letterSpacing: "0.14em", textTransform: "uppercase", color: "#4338ca", fontWeight: 700 }}>
               {type === "invoice" ? "Tax Invoice" : "Quotation"}
             </div>
-            <div style={{ fontSize: "24px", fontWeight: 700, marginTop: "8px" }}>{invoiceNumber}</div>
+            <div style={{ fontSize: "24px", fontWeight: 700, marginTop: "8px", overflowWrap: "anywhere" }}>{invoiceNumber}</div>
             <div style={{ marginTop: "10px", color: "#334155" }}>Due Date: {formatDate(dueDate)}</div>
             <div style={{ color: "#334155" }}>Tax Mode: {taxType === "igst" ? "IGST 18%" : "CGST 9% + SGST 9%"}</div>
           </div>
@@ -228,7 +243,7 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
           <tbody>
             {items.map((item) => (
               <tr key={item.itemId ?? `${item.description}-${item.hsnCode}`} style={avoidBreak}>
-                <td style={styles.cell}>{item.description}</td>
+                <td style={{ ...styles.cell, overflowWrap: "anywhere" }}>{item.description}</td>
                 <td style={styles.cell}>{item.hsnCode || "-"}</td>
                 <td style={styles.cell}>{item.quantity}</td>
                 <td style={styles.cell}>{formatCurrency(item.rate)}</td>
@@ -243,11 +258,11 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
         <div style={styles.leftColumn}>
           <div style={styles.wordsBox}>
             <div style={styles.label}>Total In Words</div>
-            <div style={{ marginTop: "10px", fontSize: "14px", fontWeight: 700, color: "#0f172a" }}>{englishAmountInWords}</div>
-            <div style={{ marginTop: "6px", fontSize: "13px", color: "#334155", fontFamily: '"Noto Sans Devanagari", "Noto Sans", sans-serif' }}>{hindiAmountInWords}</div>
+            <div style={{ marginTop: "10px", fontSize: "14px", fontWeight: 700, color: "#0f172a", overflowWrap: "anywhere" }}>{englishAmountInWords}</div>
+            <div style={{ marginTop: "6px", fontSize: "13px", color: "#334155", fontFamily: '"Noto Sans Devanagari", "Noto Sans", sans-serif', overflowWrap: "anywhere" }}>{hindiAmountInWords}</div>
             <div style={styles.divider}>
               <div style={styles.label}>Terms & Conditions</div>
-              <div style={{ marginTop: "8px", whiteSpace: "pre-line", color: "#475569" }}>{terms || "-"}</div>
+              <div style={{ marginTop: "8px", whiteSpace: "pre-line", color: "#475569", overflowWrap: "anywhere" }}>{terms || "-"}</div>
             </div>
           </div>
         </div>
@@ -270,7 +285,7 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
       <div style={styles.notesRow}>
         <div style={styles.notesCard}>
           <div style={styles.label}>Notes</div>
-          <div style={{ marginTop: "8px", whiteSpace: "pre-line", color: "#475569" }}>{notes || "-"}</div>
+          <div style={{ marginTop: "8px", whiteSpace: "pre-line", color: "#475569", overflowWrap: "anywhere" }}>{notes || "-"}</div>
         </div>
         <div style={styles.secondaryCard}>
           <div style={styles.label}>Reference</div>
