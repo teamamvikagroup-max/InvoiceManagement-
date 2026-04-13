@@ -11,7 +11,7 @@ function HistoryAction({ type, record, uploadLooksStalled, isDownloading, onDown
     return (
       <div className="flex w-full flex-col gap-3 sm:flex-row xl:justify-end">
         <button type="button" onClick={onDownload} disabled={isDownloading} className="btn-primary w-full sm:w-auto">
-          {isDownloading ? "Preparing..." : type === "invoice" ? "Download Invoice" : "Download Quotation"}
+          {isDownloading ? `Downloading ${type === "invoice" ? "invoice" : "quotation"}...` : type === "invoice" ? "Download Invoice" : "Download Quotation"}
         </button>
       </div>
     );
