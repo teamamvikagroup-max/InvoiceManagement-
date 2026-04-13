@@ -159,6 +159,14 @@ async function uploadBlob(fileRef, blob, metadata, timeoutMs, options = {}) {
   console.info(progressLabel, "completed");
 }
 
+async function fileToDataUrl(file) {
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result || "");
+    reader.onerror = () => reject(new Error("Unable to prepare company logo for PDF rendering."));
+    reader.readAsDataURL(file);
+  });
+}
 export async function uploadCompanyLogo(companyId, file) {
   if (!file) {
     return { logoUrl: "", logoPath: "" };
@@ -188,13 +196,15 @@ export async function uploadCompanyLogo(companyId, file) {
     },
   );
 
+  const logoBase64 = await fileToDataUrl(file);
+
   const logoUrl = await withTimeout(
     getDownloadURL(logoReference),
     FILE_URL_TIMEOUT_MS,
     "Logo URL generation timed out after upload.",
   );
 
-  return { logoUrl, logoPath };
+  return { logoUrl, logoPath, logoBase64 };
 }
 
 export async function deleteStorageFile(path) {
@@ -224,6 +234,7 @@ export async function createCompany(payload) {
     website: payload.website ?? "",
     logoUrl: payload.logoUrl ?? "",
     logoPath: payload.logoPath ?? "",
+    logoBase64: payload.logoBase64 ?? "",
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
@@ -243,6 +254,7 @@ export async function updateCompany(companyId, payload) {
       website: payload.website ?? "",
       logoUrl: payload.logoUrl ?? "",
       logoPath: payload.logoPath ?? "",
+      logoBase64: payload.logoBase64 ?? "",
       updatedAt: Date.now(),
     }),
     DATABASE_WRITE_TIMEOUT_MS,
@@ -393,3 +405,4 @@ export function buildCompanySnapshot(company) {
     logoBase64: company.logoBase64 ?? "",
   };
 }
+

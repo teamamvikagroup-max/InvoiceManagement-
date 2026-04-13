@@ -94,6 +94,7 @@ export default function CompanyProfilePage() {
           ...values,
           logoUrl: activeCompany.logoUrl ?? activeCompany.logoBase64 ?? "",
           logoPath: activeCompany.logoPath ?? "",
+          logoBase64: activeCompany.logoBase64 ?? "",
         };
 
         if (logoFile) {
@@ -103,6 +104,7 @@ export default function CompanyProfilePage() {
             ...nextPayload,
             logoUrl: uploadedLogo.logoUrl ?? nextPayload.logoUrl,
             logoPath: uploadedLogo.logoPath ?? nextPayload.logoPath,
+            logoBase64: uploadedLogo.logoBase64 ?? nextPayload.logoBase64,
           };
         }
 
@@ -128,6 +130,7 @@ export default function CompanyProfilePage() {
           ...values,
           logoUrl: "",
           logoPath: "",
+          logoBase64: "",
         });
 
         let nextCompany = {
@@ -136,6 +139,7 @@ export default function CompanyProfilePage() {
           ...values,
           logoUrl: "",
           logoPath: "",
+          logoBase64: "",
           createdAt: Date.now(),
           updatedAt: Date.now(),
         };
@@ -147,12 +151,14 @@ export default function CompanyProfilePage() {
             ...values,
             logoUrl: uploadedLogo.logoUrl ?? "",
             logoPath: uploadedLogo.logoPath ?? "",
+            logoBase64: uploadedLogo.logoBase64 ?? "",
           });
 
           nextCompany = {
             ...nextCompany,
             logoUrl: uploadedLogo.logoUrl ?? "",
             logoPath: uploadedLogo.logoPath ?? "",
+            logoBase64: uploadedLogo.logoBase64 ?? "",
           };
         }
 
@@ -201,3 +207,6 @@ export default function CompanyProfilePage() {
     </div>
   );
 }
+
+
+
