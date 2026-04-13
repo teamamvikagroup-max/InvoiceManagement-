@@ -1,20 +1,17 @@
 import { useState } from "react";
 import { formatCurrency } from "../utils/calculations";
 import { formatDate, formatTimestamp } from "../utils/formatters";
-import { downloadPdfUrl, openPdfUrl } from "../utils/historyDownloads";
+import { downloadPdfUrl } from "../utils/historyDownloads";
 import EmptyState from "./EmptyState";
 
 const STALLED_UPLOAD_MS = 60000;
 
-function HistoryAction({ record, uploadLooksStalled, isDownloading, onDownload, onOpen }) {
+function HistoryAction({ type, record, uploadLooksStalled, isDownloading, onDownload }) {
   if (record.pdfUrl) {
     return (
       <div className="flex w-full flex-col gap-3 sm:flex-row xl:justify-end">
-        <button type="button" onClick={onOpen} className="btn-primary w-full sm:w-auto">
-          Open PDF
-        </button>
-        <button type="button" onClick={onDownload} disabled={isDownloading} className="btn-secondary w-full sm:w-auto">
-          {isDownloading ? "Preparing..." : "Download PDF"}
+        <button type="button" onClick={onDownload} disabled={isDownloading} className="btn-primary w-full sm:w-auto">
+          {isDownloading ? "Preparing..." : type === "invoice" ? "Download Invoice" : "Download Quotation"}
         </button>
       </div>
     );
@@ -45,15 +42,6 @@ export default function HistoryList({ type, records, isLoading }) {
       window.alert("Unable to download the PDF right now. Please try again.");
     } finally {
       setDownloadingId("");
-    }
-  };
-
-  const handleOpen = (record) => {
-    try {
-      openPdfUrl(record.pdfUrl);
-    } catch (error) {
-      console.error("Unable to open PDF from history record", error);
-      window.alert("Unable to open the PDF right now. Please try again.");
     }
   };
 
@@ -93,11 +81,11 @@ export default function HistoryList({ type, records, isLoading }) {
                 <p className="mt-2 text-2xl font-semibold text-brand-700">{formatCurrency(record.totalAmount)}</p>
                 <div className="mt-4 flex xl:justify-end">
                   <HistoryAction
+                    type={type}
                     record={record}
                     uploadLooksStalled={uploadLooksStalled}
                     isDownloading={downloadingId === record.id}
                     onDownload={() => handleDownload(record)}
-                    onOpen={() => handleOpen(record)}
                   />
                 </div>
               </div>

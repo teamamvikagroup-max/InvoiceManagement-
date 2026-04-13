@@ -3,11 +3,11 @@ import { formatAmountInWordsEnglish, formatDate, formatWebsite } from "../utils/
 
 export default function DocumentPreview({ type, invoiceNumber, dueDate, company, customer, items, totals, notes, terms, taxType }) {
   const englishAmountInWords = formatAmountInWordsEnglish(totals.totalAmount);
-  const logoSrc = company?.logoUrl || company?.logoBase64 || "";
+  const logoSrc = company?.logoUrl || "";
 
   return (
     <div className="w-[794px] bg-white px-9 pb-14 pt-8 font-['Noto_Sans','Noto_Sans_Devanagari','Arial',sans-serif] text-slate-900">
-      <div className="flex items-start justify-between border-b border-slate-200 pb-7">
+      <div className="flex items-start justify-between gap-5 border-b border-slate-200 pb-7">
         <div className="max-w-md">
           <h1 className="text-3xl font-bold">{company?.name || "Company Name"}</h1>
           <p className="mt-3 whitespace-pre-line text-sm leading-6 text-slate-600">{company?.address || "-"}</p>
@@ -32,7 +32,7 @@ export default function DocumentPreview({ type, invoiceNumber, dueDate, company,
         </div>
       </div>
 
-      <div className="mt-4 flex items-start justify-between gap-5">
+      <div className="mt-[18px] flex items-start justify-between gap-5">
         <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Bill To</p>
           <h2 className="mt-3 text-xl font-semibold">{customer.name || "-"}</h2>

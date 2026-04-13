@@ -34,6 +34,44 @@ function waitForImageLoad(src) {
     }
   });
 }
+async function imageUrlToDataUrl(url) {
+  if (!url) {
+    return "";
+  }
+
+  const response = await fetch(url, { mode: "cors" });
+  if (!response.ok) {
+    throw new Error("Unable to load company logo for PDF rendering.");
+  }
+
+  const blob = await response.blob();
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result || "");
+    reader.onerror = () => reject(new Error("Unable to convert company logo for PDF rendering."));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function prepareCompanyForPdf(company) {
+  if (!company) {
+    return null;
+  }
+
+  console.log("PDF company logoUrl before render", company.logoUrl);
+
+  if (!company.logoUrl) {
+    return { ...company, logoUrl: "" };
+  }
+
+  try {
+    const dataUrl = await imageUrlToDataUrl(company.logoUrl);
+    return { ...company, logoUrl: dataUrl || company.logoUrl };
+  } catch (error) {
+    console.warn("Company logo preload failed for PDF", error);
+    return { ...company, logoUrl: "" };
+  }
+}
 function createInitialFormData() {
   return {
     companyId: "",
@@ -179,7 +217,7 @@ export default function DocumentForm({ type, companies }) {
             type={type}
             invoiceNumber={nextNumber || "Preview"}
             dueDate={formData.dueDate}
-            company={selectedCompany}
+            company={pdfCompany ?? selectedCompany}
             customer={formData.customer}
             items={preparedItems}
             totals={totals}

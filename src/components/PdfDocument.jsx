@@ -16,21 +16,13 @@ const styles = {
     lineHeight: 1.45,
     padding: "26px 28px 52px",
   },
-  row: {
+  headerRow: {
     display: "flex",
     justifyContent: "space-between",
     gap: "20px",
     alignItems: "flex-start",
-  },
-  section: {
-    marginTop: "20px",
-  },
-  label: {
-    fontSize: "11px",
-    letterSpacing: "0.14em",
-    textTransform: "uppercase",
-    color: "#64748b",
-    fontWeight: 700,
+    borderBottom: "1px solid #cbd5e1",
+    paddingBottom: "18px",
   },
   rightColumn: {
     width: "248px",
@@ -52,6 +44,25 @@ const styles = {
     padding: "10px 12px",
     backgroundColor: "#ffffff",
   },
+  billSummaryRow: {
+    ...avoidBreak,
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "20px",
+    alignItems: "flex-start",
+    marginTop: "18px",
+  },
+  billColumn: {
+    flex: 1,
+    minWidth: 0,
+  },
+  label: {
+    fontSize: "11px",
+    letterSpacing: "0.14em",
+    textTransform: "uppercase",
+    color: "#64748b",
+    fontWeight: 700,
+  },
   titleBox: {
     border: "1px solid #dbe4ff",
     background: "linear-gradient(180deg, #eef2ff 0%, #e0e7ff 100%)",
@@ -60,17 +71,8 @@ const styles = {
     width: "100%",
     boxShadow: "0 12px 28px rgba(99, 102, 241, 0.12)",
   },
-  billSummaryRow: {
-    ...avoidBreak,
-    display: "flex",
-    justifyContent: "space-between",
-    gap: "20px",
-    alignItems: "flex-start",
-    marginTop: "16px",
-  },
-  billColumn: {
-    flex: 1,
-    minWidth: 0,
+  section: {
+    marginTop: "20px",
   },
   table: {
     width: "100%",
@@ -147,13 +149,13 @@ const styles = {
 
 export default function PdfDocument({ type, invoiceNumber, dueDate, company, customer, items, totals, notes, terms, taxType }) {
   const englishAmountInWords = formatAmountInWordsEnglish(totals.totalAmount);
-  const logoSrc = company?.logoUrl || company?.logoBase64 || "";
+  const logoSrc = company?.logoUrl || "";
 
   console.log("PDF company logoUrl", company?.logoUrl);
 
   return (
     <div style={styles.page}>
-      <div style={{ ...styles.row, borderBottom: "1px solid #cbd5e1", paddingBottom: "18px" }}>
+      <div style={styles.headerRow}>
         <div style={{ maxWidth: "430px" }}>
           <div style={{ fontSize: "28px", fontWeight: 700 }}>{company?.name || "Company Name"}</div>
           <div style={{ marginTop: "8px", whiteSpace: "pre-line", color: "#475569" }}>{company?.address || "-"}</div>
