@@ -65,7 +65,8 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        <div className="mt-6 grid gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+          <Link to="/signup" className="font-medium text-brand-700 hover:underline">Create a new account</Link>
           <Link to="/otp-login" className="font-medium text-brand-700 hover:underline">Login with phone number and OTP</Link>
         </div>
       </div>
