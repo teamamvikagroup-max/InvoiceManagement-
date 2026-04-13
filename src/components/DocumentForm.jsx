@@ -47,7 +47,7 @@ async function prepareCompanyForPdf(company) {
   });
 
   if (!company.logoUrl) {
-    return { ...company, logoUrl: "" };
+    return { ...company, logoUrl: company.logoUrl };
   }
 
   try {
@@ -55,7 +55,7 @@ async function prepareCompanyForPdf(company) {
     return { ...company, logoUrl: dataUrl || company.logoUrl };
   } catch (error) {
     console.warn("[PDF Export] logo preload failed", error);
-    return { ...company, logoUrl: "" };
+    return { ...company, logoUrl: company.logoUrl };
   }
 }
 

@@ -28,8 +28,8 @@ const styles = {
   headerRow: {
     display: "flex",
     justifyContent: "space-between",
-    gap: "24px",
-    alignItems: "flex-start",
+    gap: "28px",
+    alignItems: "center",
     borderBottom: "1px solid #cbd5e1",
     paddingBottom: "18px",
   },
@@ -38,7 +38,7 @@ const styles = {
     minWidth: 0,
   },
   rightColumn: {
-    width: "268px",
+    width: "248px",
     display: "flex",
     flexDirection: "column",
     alignItems: "flex-end",
@@ -46,15 +46,15 @@ const styles = {
   },
   logoArea: {
     width: "100%",
-    minHeight: "98px",
+    minHeight: "88px",
     display: "flex",
     justifyContent: "flex-end",
-    alignItems: "flex-start",
+    alignItems: "center",
   },
   logoFrame: {
     border: "1px solid #dbe4ff",
     borderRadius: "16px",
-    padding: "10px 12px",
+    padding: "10px 14px",
     backgroundColor: "#ffffff",
     boxShadow: "0 10px 22px rgba(15, 23, 42, 0.06)",
   },
@@ -62,8 +62,8 @@ const styles = {
     ...avoidBreak,
     display: "flex",
     justifyContent: "space-between",
-    gap: "24px",
-    alignItems: "flex-start",
+    gap: "28px",
+    alignItems: "center",
     marginTop: "16px",
   },
   billColumn: {
@@ -83,7 +83,7 @@ const styles = {
     borderRadius: "16px",
     padding: "14px 16px",
     width: "100%",
-    marginTop: "6px",
+    marginTop: "18px",
     boxShadow: "0 14px 28px rgba(99, 102, 241, 0.12)",
   },
   section: {
@@ -111,7 +111,7 @@ const styles = {
     ...avoidBreak,
     display: "flex",
     gap: "18px",
-    alignItems: "flex-start",
+    alignItems: "center",
     marginTop: "18px",
   },
   leftColumn: {
@@ -153,7 +153,7 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     gap: "18px",
-    alignItems: "flex-start",
+    alignItems: "center",
     marginTop: "18px",
   },
   notesCard: {
@@ -196,11 +196,9 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
           <div style={styles.logoArea}>
             {logoSrc ? (
               <div style={styles.logoFrame}>
-                <img src={logoSrc} alt={company?.name || "Company logo"} style={{ height: "68px", width: "auto", maxWidth: "170px", objectFit: "contain", display: "block" }} crossOrigin="anonymous" />
+                <img src={logoSrc} alt={company?.name || "Company logo"} style={{ height: "78px", width: "auto", maxWidth: "188px", objectFit: "contain", display: "block" }} crossOrigin="anonymous" />
               </div>
-            ) : (
-              <div style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a" }}>{company?.name || "Company"}</div>
-            )}
+             ) : (<div style={{ width: "188px", height: "78px", marginRight: "2px" }} />)}
           </div>
         </div>
       </div>
@@ -295,3 +293,5 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
     </div>
   );
 }
+
+
