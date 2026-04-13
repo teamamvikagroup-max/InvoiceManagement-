@@ -59,11 +59,69 @@ async function waitForCloneImages(container) {
   );
 }
 
+async function imageToDataUrl(url) {
+  const response = await fetch(url, { mode: "cors" });
+  if (!response.ok) {
+    throw new Error("Unable to load logo image for PDF.");
+  }
+
+  const blob = await response.blob();
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result || "");
+    reader.onerror = () => reject(new Error("Unable to convert logo image for PDF."));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function getLogoForPdf(container) {
+  const logoImage = container.querySelector("img");
+  if (!logoImage?.src) {
+    return null;
+  }
+
+  if (logoImage.src.startsWith("data:image/")) {
+    return logoImage.src;
+  }
+
+  try {
+    return await imageToDataUrl(logoImage.src);
+  } catch (error) {
+    console.warn("[PDF Export] direct logo extraction failed", error);
+    return null;
+  }
+}
+
+function getImageFormat(dataUrl) {
+  if (dataUrl?.startsWith("data:image/jpeg") || dataUrl?.startsWith("data:image/jpg")) {
+    return "JPEG";
+  }
+  return "PNG";
+}
+
+function addLogoToPdf(pdf, logoDataUrl) {
+  if (!logoDataUrl) {
+    return;
+  }
+
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const x = pageWidth - 1.82;
+  const y = 0.43;
+  const width = 1.18;
+  const height = 0.72;
+
+  pdf.setPage(1);
+  pdf.setFillColor(255, 255, 255);
+  pdf.roundedRect(x - 0.06, y - 0.04, width + 0.12, height + 0.08, 0.12, 0.12, "F");
+  pdf.addImage(logoDataUrl, getImageFormat(logoDataUrl), x, y, width, height, undefined, "FAST");
+}
+
 export async function generatePdfBlob(element, filename) {
   const { wrapper, clone } = createExportClone(element);
 
   try {
     await waitForCloneImages(clone);
+    const logoDataUrl = await getLogoForPdf(clone);
 
     const worker = html2pdf()
       .set({
@@ -91,6 +149,8 @@ export async function generatePdfBlob(element, filename) {
       .toPdf();
 
     const pdf = await worker.get("pdf");
+    addLogoToPdf(pdf, logoDataUrl);
+
     const pageCount = pdf.internal.getNumberOfPages();
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
