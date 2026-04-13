@@ -36,6 +36,41 @@ async function imageUrlToDataUrl(url) {
   });
 }
 
+async function waitForImages(container) {
+  if (!container) {
+    return;
+  }
+
+  const images = Array.from(container.querySelectorAll("img"));
+  if (!images.length) {
+    return;
+  }
+
+  await Promise.all(
+    images.map(
+      (image) =>
+        new Promise((resolve) => {
+          if (image.complete && image.naturalWidth > 0) {
+            resolve();
+            return;
+          }
+
+          const cleanup = () => {
+            image.removeEventListener("load", handleDone);
+            image.removeEventListener("error", handleDone);
+          };
+
+          const handleDone = () => {
+            cleanup();
+            resolve();
+          };
+
+          image.addEventListener("load", handleDone, { once: true });
+          image.addEventListener("error", handleDone, { once: true });
+        }),
+    ),
+  );
+}
 async function prepareCompanyForPdf(company) {
   if (!company) {
     return null;
@@ -144,6 +179,7 @@ export default function DocumentForm({ type, companies }) {
       const preparedCompanyForPdf = await prepareCompanyForPdf(selectedCompany);
       setPdfCompany(preparedCompanyForPdf);
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      await waitForImages(pdfRenderRef.current);
 
       const invoiceNumber = await reserveDocumentNumber(type);
       const filename = `${invoiceNumber}.pdf`;
@@ -232,3 +268,5 @@ export default function DocumentForm({ type, companies }) {
     </>
   );
 }
+
+
