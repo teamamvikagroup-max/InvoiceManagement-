@@ -17,23 +17,6 @@ import ItemsTable from "./ItemsTable";
 import PdfDocument from "./PdfDocument";
 import StatusAlert from "./StatusAlert";
 
-function waitForImageLoad(src) {
-  if (!src) {
-    return Promise.resolve();
-  }
-
-  return new Promise((resolve) => {
-    const image = new Image();
-    image.crossOrigin = "anonymous";
-    image.onload = () => resolve();
-    image.onerror = () => resolve();
-    image.src = src;
-
-    if (image.complete) {
-      resolve();
-    }
-  });
-}
 async function imageUrlToDataUrl(url) {
   if (!url) {
     return "";
@@ -58,7 +41,10 @@ async function prepareCompanyForPdf(company) {
     return null;
   }
 
-  console.log("PDF company logoUrl before render", company.logoUrl);
+  console.info("[PDF Export] prepareCompanyForPdf", {
+    companyName: company.name,
+    logoUrl: company.logoUrl,
+  });
 
   if (!company.logoUrl) {
     return { ...company, logoUrl: "" };
@@ -68,10 +54,11 @@ async function prepareCompanyForPdf(company) {
     const dataUrl = await imageUrlToDataUrl(company.logoUrl);
     return { ...company, logoUrl: dataUrl || company.logoUrl };
   } catch (error) {
-    console.warn("Company logo preload failed for PDF", error);
+    console.warn("[PDF Export] logo preload failed", error);
     return { ...company, logoUrl: "" };
   }
 }
+
 function createInitialFormData() {
   return {
     companyId: "",
@@ -91,6 +78,7 @@ export default function DocumentForm({ type, companies }) {
   const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState(null);
   const [formData, setFormData] = useState(createInitialFormData);
+  const [pdfCompany, setPdfCompany] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -140,6 +128,7 @@ export default function DocumentForm({ type, companies }) {
 
   const resetForm = async () => {
     setFormData(createInitialFormData());
+    setPdfCompany(null);
     setNextNumber(await peekNextDocumentNumber(type));
   };
 
@@ -152,8 +141,19 @@ export default function DocumentForm({ type, companies }) {
 
     setIsSaving(true);
     try {
+      const preparedCompanyForPdf = await prepareCompanyForPdf(selectedCompany);
+      setPdfCompany(preparedCompanyForPdf);
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
       const invoiceNumber = await reserveDocumentNumber(type);
       const filename = `${invoiceNumber}.pdf`;
+
+      console.info("[PDF Export] using template", {
+        template: pdfRenderRef.current?.dataset?.pdfTemplate,
+        type,
+        invoiceNumber,
+      });
+
       const pdfBlob = await generatePdfBlob(pdfRenderRef.current, filename);
       const { pdfUrl, pdfPath } = await uploadDocumentPdf(type, invoiceNumber, pdfBlob);
 
@@ -194,7 +194,9 @@ export default function DocumentForm({ type, companies }) {
     }
   };
 
-  if (!companies.length) return <EmptyState title="Add a company before creating documents" description="Invoices and quotations pull branding and GST details from the company profile section. Create at least one company to continue." />;
+  if (!companies.length) {
+    return <EmptyState title="Add a company before creating documents" description="Invoices and quotations pull branding and GST details from the company profile section. Create at least one company to continue." />;
+  }
 
   return (
     <>
@@ -212,7 +214,7 @@ export default function DocumentForm({ type, companies }) {
         <div className="glass-card p-4 md:p-6"><div className="mb-4"><h3 className="text-lg font-semibold text-slate-900 md:text-xl">Live PDF Preview</h3><p className="mt-1 text-sm text-slate-600 md:text-base">The generated PDF will use this template and current form values.</p></div><div className="max-h-[calc(100vh-14rem)] overflow-auto rounded-3xl border border-slate-200 bg-slate-100 p-4"><div className="mx-auto w-fit"><DocumentPreview type={type} invoiceNumber={nextNumber || "Preview"} dueDate={formData.dueDate} company={selectedCompany} customer={formData.customer} items={preparedItems} totals={totals} notes={formData.notes} terms={formData.terms} taxType={formData.taxType} /></div></div></div>
       </div>
       <div className="pointer-events-none fixed -left-[200vw] top-0 opacity-0">
-        <div ref={pdfRenderRef}>
+        <div ref={pdfRenderRef} data-pdf-template="PdfDocumentExportV3">
           <PdfDocument
             type={type}
             invoiceNumber={nextNumber || "Preview"}
