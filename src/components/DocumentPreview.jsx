@@ -1,5 +1,5 @@
 import { formatCurrency } from "../utils/calculations";
-import { formatAmountInWordsEnglish, formatAmountInWordsHindi, formatDate, formatWebsite } from "../utils/formatters";
+import { formatAmountInWordsEnglish, formatDate, formatWebsite } from "../utils/formatters";
 
 function headingClass(value, baseClass, compactClass) {
   return `${value && value.length > 28 ? compactClass : baseClass} break-words`;
@@ -7,7 +7,6 @@ function headingClass(value, baseClass, compactClass) {
 
 export default function DocumentPreview({ type, invoiceNumber, dueDate, company, customer, items, totals, notes, terms, taxType }) {
   const englishAmountInWords = formatAmountInWordsEnglish(totals.totalAmount);
-  const hindiAmountInWords = formatAmountInWordsHindi(totals.totalAmount);
   const logoSrc = company?.logoUrl || company?.logoBase64 || "";
 
   return (
@@ -90,7 +89,6 @@ export default function DocumentPreview({ type, invoiceNumber, dueDate, company,
         <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Total In Words</p>
           <p className="mt-3 break-words text-sm font-semibold text-slate-900">{englishAmountInWords}</p>
-          <p className="mt-2 break-words text-sm text-slate-700 [font-family:'Noto_Sans_Devanagari','Noto_Sans',sans-serif]">{hindiAmountInWords}</p>
           <div className="mt-4 border-t border-slate-200 pt-4">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Terms & Conditions</p>
             <p className="mt-3 whitespace-pre-line break-words text-sm leading-6 text-slate-600">{terms || "-"}</p>
@@ -113,16 +111,16 @@ export default function DocumentPreview({ type, invoiceNumber, dueDate, company,
       </div>
 
       <div className="mt-6 flex items-start justify-between gap-5">
-        <div className="w-[68%] rounded-3xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+        <div className="w-1/2 rounded-3xl border border-slate-200 bg-white px-4 py-4 shadow-sm min-h-[96px]">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Notes</p>
           <p className="mt-3 whitespace-pre-line break-words text-sm leading-6 text-slate-600">{notes || "-"}</p>
         </div>
-        <div className="w-[32%] rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
+        <div className="w-1/2 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 min-h-[96px]">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Reference</p>
-          <p className="mt-3 text-sm leading-6 text-slate-600">Reserved for internal remarks, stamp, or future metadata.</p>
         </div>
       </div>
     </div>
   );
 }
+
 

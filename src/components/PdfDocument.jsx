@@ -1,5 +1,5 @@
 import { formatCurrency } from "../utils/calculations";
-import { formatAmountInWordsEnglish, formatAmountInWordsHindi, formatDate, formatWebsite } from "../utils/formatters";
+import { formatAmountInWordsEnglish, formatDate, formatWebsite } from "../utils/formatters";
 
 const avoidBreak = {
   breakInside: "avoid",
@@ -177,7 +177,6 @@ const styles = {
 
 export default function PdfDocument({ type, invoiceNumber, dueDate, company, customer, items, totals, notes, terms, taxType }) {
   const englishAmountInWords = formatAmountInWordsEnglish(totals.totalAmount);
-  const hindiAmountInWords = formatAmountInWordsHindi(totals.totalAmount);
   const logoSrc = company?.logoUrl || company?.logoBase64 || "";
 
   return (
@@ -257,7 +256,6 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
           <div style={styles.wordsBox}>
             <div style={styles.label}>Total In Words</div>
             <div style={{ marginTop: "10px", fontSize: "14px", fontWeight: 700, color: "#0f172a", overflowWrap: "anywhere" }}>{englishAmountInWords}</div>
-            <div style={{ marginTop: "6px", fontSize: "13px", color: "#334155", fontFamily: '"Noto Sans Devanagari", "Noto Sans", sans-serif', overflowWrap: "anywhere" }}>{hindiAmountInWords}</div>
             <div style={styles.divider}>
               <div style={styles.label}>Terms & Conditions</div>
               <div style={{ marginTop: "8px", whiteSpace: "pre-line", color: "#475569", overflowWrap: "anywhere" }}>{terms || "-"}</div>
@@ -281,18 +279,18 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
       </div>
 
       <div style={styles.notesRow}>
-        <div style={styles.notesCard}>
+        <div style={{ ...styles.notesCard, width: "50%", minHeight: "96px" }}>
           <div style={styles.label}>Notes</div>
           <div style={{ marginTop: "8px", whiteSpace: "pre-line", color: "#475569", overflowWrap: "anywhere" }}>{notes || "-"}</div>
         </div>
-        <div style={styles.secondaryCard}>
+        <div style={{ ...styles.secondaryCard, width: "50%", minHeight: "96px" }}>
           <div style={styles.label}>Reference</div>
-          <div style={{ marginTop: "8px", color: "#64748b" }}>Reserved for internal remarks, stamp, or future metadata.</div>
         </div>
       </div>
     </div>
   );
 }
+
 
 
 
