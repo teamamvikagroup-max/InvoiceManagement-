@@ -51,7 +51,7 @@ async function waitForCloneImages(container) {
             resolve();
           };
 
-          timer = window.setTimeout(handleDone, 2500);
+          timer = window.setTimeout(handleDone, 1200);
           image.addEventListener("load", handleDone, { once: true });
           image.addEventListener("error", handleDone, { once: true });
         }),
@@ -170,9 +170,9 @@ export async function generatePdfBlob(element, filename) {
       .set({
         filename,
         margin: [0.24, 0.2, 0.9, 0.2],
-        image: { type: "png", quality: 1 },
+        image: { type: "jpeg", quality: 0.92 },
         html2canvas: {
-          scale: 2,
+          scale: 1.35,
           useCORS: true,
           allowTaint: false,
           backgroundColor: "#ffffff",
@@ -182,7 +182,7 @@ export async function generatePdfBlob(element, filename) {
           unit: "in",
           format: "a4",
           orientation: "portrait",
-          compress: false,
+          compress: true,
         },
         pagebreak: {
           mode: ["css", "legacy"],
@@ -215,4 +215,5 @@ export async function generatePdfBlob(element, filename) {
     wrapper.remove();
   }
 }
+
 

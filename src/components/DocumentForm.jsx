@@ -17,9 +17,15 @@ import ItemsTable from "./ItemsTable";
 import PdfDocument from "./PdfDocument";
 import StatusAlert from "./StatusAlert";
 
+const companyLogoCache = new Map();
+
 async function imageUrlToDataUrl(url) {
   if (!url) {
     return "";
+  }
+
+  if (companyLogoCache.has(url)) {
+    return companyLogoCache.get(url);
   }
 
   const response = await fetch(url, { mode: "cors" });
@@ -30,57 +36,16 @@ async function imageUrlToDataUrl(url) {
   const blob = await response.blob();
   return await new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result || "");
+    reader.onloadend = () => {
+      const result = reader.result || "";
+      companyLogoCache.set(url, result);
+      resolve(result);
+    };
     reader.onerror = () => reject(new Error("Unable to convert company logo for PDF rendering."));
     reader.readAsDataURL(blob);
   });
 }
 
-async function waitForImages(container) {
-  if (!container) {
-    return;
-  }
-
-  const images = Array.from(container.querySelectorAll("img"));
-  if (!images.length) {
-    return;
-  }
-
-  await Promise.all(
-    images.map(
-      (image) =>
-        new Promise((resolve) => {
-          if (image.complete) {
-            resolve();
-            return;
-          }
-
-          let timer = null;
-
-          const cleanup = () => {
-            if (timer) {
-              window.clearTimeout(timer);
-            }
-            image.removeEventListener("load", handleDone);
-            image.removeEventListener("error", handleDone);
-          };
-
-          const handleDone = () => {
-            cleanup();
-            resolve();
-          };
-
-          timer = window.setTimeout(() => {
-            console.warn("[PDF Export] image wait timed out", image.currentSrc || image.src);
-            handleDone();
-          }, 2500);
-
-          image.addEventListener("load", handleDone, { once: true });
-          image.addEventListener("error", handleDone, { once: true });
-        }),
-    ),
-  );
-}
 async function prepareCompanyForPdf(company) {
   if (!company) {
     return null;
@@ -91,7 +56,7 @@ async function prepareCompanyForPdf(company) {
     logoUrl: company.logoUrl,
   });
 
-  if (!company.logoUrl) {
+  if (!company.logoUrl || company.logoUrl.startsWith("data:image/")) {
     return { ...company, logoUrl: company.logoUrl };
   }
 
@@ -192,7 +157,6 @@ export default function DocumentForm({ type, companies }) {
       const preparedCompanyForPdf = await prepareCompanyForPdf(selectedCompany);
       setPdfCompany(preparedCompanyForPdf);
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      await waitForImages(pdfRenderRef.current);
 
       const invoiceNumber = await reserveDocumentNumber(type);
       const filename = `${invoiceNumber}.pdf`;
@@ -281,8 +245,3 @@ export default function DocumentForm({ type, companies }) {
     </>
   );
 }
-
-
-
-
-
