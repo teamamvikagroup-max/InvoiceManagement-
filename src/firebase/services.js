@@ -8,13 +8,22 @@ import {
   set,
   update,
 } from "firebase/database";
-import { deleteObject, getDownloadURL, ref as storageRef, uploadBytes } from "firebase/storage";
+import {
+  deleteObject,
+  getDownloadURL,
+  ref as storageRef,
+  uploadBytes,
+  uploadBytesResumable,
+} from "firebase/storage";
 import { assertDatabaseConfigured, assertStorageConfigured } from "./config";
 
 const PDF_UPLOAD_TIMEOUT_MS = 90000;
 const DATABASE_WRITE_TIMEOUT_MS = 20000;
 const FILE_URL_TIMEOUT_MS = 20000;
-const LOGO_UPLOAD_TIMEOUT_MS = 30000;
+const LOGO_UPLOAD_TIMEOUT_MS = 45000;
+const SUPPORTED_LOGO_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+const MAX_LOGO_DIMENSION = 700;
+const DEFAULT_LOGO_QUALITY = 0.86;
 
 function databaseRef(path) {
   return ref(assertDatabaseConfigured(), path);
@@ -159,6 +168,45 @@ async function uploadBlob(fileRef, blob, metadata, timeoutMs, options = {}) {
   console.info(progressLabel, "completed");
 }
 
+async function uploadBlobResumable(fileRef, blob, metadata, timeoutMs, options = {}) {
+  const {
+    timeoutMessage = "Upload timed out.",
+    progressLabel = "Upload progress",
+    onProgress,
+  } = options;
+
+  console.info(progressLabel, "started");
+
+  return await new Promise((resolve, reject) => {
+    const uploadTask = uploadBytesResumable(fileRef, blob, metadata);
+    const timer = setTimeout(() => {
+      uploadTask.cancel();
+      reject(new Error(timeoutMessage));
+    }, timeoutMs);
+
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        const progress = snapshot.totalBytes
+          ? Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)
+          : 0;
+        console.info(progressLabel, `${progress}%`);
+        onProgress?.(progress);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+      () => {
+        clearTimeout(timer);
+        console.info(progressLabel, "completed");
+        onProgress?.(100);
+        resolve(uploadTask.snapshot);
+      },
+    );
+  });
+}
+
 async function fileToDataUrl(file) {
   return await new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -166,6 +214,84 @@ async function fileToDataUrl(file) {
     reader.onerror = () => reject(new Error("Unable to prepare company logo for PDF rendering."));
     reader.readAsDataURL(file);
   });
+}
+
+function validateLogoFile(file) {
+  if (!file) {
+    return;
+  }
+
+  const normalizedType = (file.type || "").toLowerCase();
+  if (!SUPPORTED_LOGO_TYPES.includes(normalizedType)) {
+    throw new Error("Please upload a PNG, JPG, JPEG, or WEBP logo.");
+  }
+}
+
+async function loadImageFromFile(file) {
+  const dataUrl = await fileToDataUrl(file);
+
+  return await new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve({ image, dataUrl });
+    image.onerror = () => reject(new Error("Unable to read the selected logo image."));
+    image.src = dataUrl;
+  });
+}
+
+async function optimizeLogoFile(file) {
+  validateLogoFile(file);
+
+  const { image } = await loadImageFromFile(file);
+  const longestSide = Math.max(image.width, image.height) || 1;
+  const scale = Math.min(1, MAX_LOGO_DIMENSION / longestSide);
+  const width = Math.max(1, Math.round(image.width * scale));
+  const height = Math.max(1, Math.round(image.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+
+  const context = canvas.getContext("2d", { alpha: true });
+  if (!context) {
+    throw new Error("Unable to prepare the selected logo for upload.");
+  }
+
+  context.clearRect(0, 0, width, height);
+  context.drawImage(image, 0, 0, width, height);
+
+  const originalType = (file.type || "image/png").toLowerCase();
+  const outputType = originalType === "image/jpg" ? "image/jpeg" : originalType;
+  const blob = await new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (value) => {
+        if (value) {
+          resolve(value);
+          return;
+        }
+        reject(new Error("Unable to compress the selected logo."));
+      },
+      outputType,
+      outputType === "image/png" ? undefined : DEFAULT_LOGO_QUALITY,
+    );
+  });
+
+  const extension = outputType === "image/png"
+    ? "png"
+    : outputType === "image/webp"
+      ? "webp"
+      : "jpg";
+
+  const compressedFile = new File([blob], `${(file.name || "logo").replace(/\.[^.]+$/, "") || "logo"}.${extension}`, {
+    type: outputType,
+    lastModified: Date.now(),
+  });
+
+  return {
+    file: compressedFile,
+    width,
+    height,
+    originalSize: file.size,
+    optimizedSize: compressedFile.size,
+  };
 }
 
 function buildCompanyWritePayload(payload = {}, existingCompany = {}) {
@@ -188,44 +314,61 @@ export function createCompanyId() {
   return push(databaseRef("companies")).key;
 }
 
-export async function uploadCompanyLogo(companyId, file) {
+export function validateCompanyLogoFile(file) {
+  validateLogoFile(file);
+}
+
+export async function uploadCompanyLogo(companyId, file, options = {}) {
   if (!file) {
-    return { logoUrl: "", logoPath: "", logoBase64: "" };
+    return { logoUrl: "", logoPath: "", logoBase64: "", optimizedSize: 0, originalSize: 0 };
   }
 
   if (!companyId) {
     throw new Error("Company ID is required before uploading a logo.");
   }
 
-  if (!file.type?.startsWith("image/")) {
-    throw new Error("Please select a valid image file for the company logo.");
-  }
-
+  const { onProgress } = options;
+  const optimized = await optimizeLogoFile(file);
   const storage = assertStorageConfigured();
-  const safeFilename = (file.name || "logo.png").replace(/[^a-zA-Z0-9._-]+/g, "-");
-  const logoPath = `company-logos/${companyId}/${safeFilename}`;
+  const safeFilename = (optimized.file.name || "logo.png").replace(/[^a-zA-Z0-9._-]+/g, "-");
+  const logoPath = `company-logos/${companyId}/${Date.now()}_${safeFilename}`;
   const logoReference = storageRef(storage, logoPath);
 
-  await uploadBlob(
+  await uploadBlobResumable(
     logoReference,
-    file,
-    { contentType: file.type || "application/octet-stream" },
+    optimized.file,
+    { contentType: optimized.file.type || "application/octet-stream" },
     LOGO_UPLOAD_TIMEOUT_MS,
     {
       timeoutMessage: "Logo upload timed out. Please try again.",
       progressLabel: "Company logo upload progress",
+      onProgress,
     },
   );
 
-  const logoBase64 = await fileToDataUrl(file);
+  const logoBase64 = await fileToDataUrl(optimized.file);
   const logoUrl = await withTimeout(
     getDownloadURL(logoReference),
     FILE_URL_TIMEOUT_MS,
     "Logo URL generation timed out after upload.",
   );
 
-  console.info("Company logo upload result", { companyId, logoPath, logoUrl });
-  return { logoUrl, logoPath, logoBase64 };
+  console.info("Company logo upload result", {
+    companyId,
+    logoPath,
+    logoUrl,
+    originalSize: optimized.originalSize,
+    optimizedSize: optimized.optimizedSize,
+    width: optimized.width,
+    height: optimized.height,
+  });
+  return {
+    logoUrl,
+    logoPath,
+    logoBase64,
+    optimizedSize: optimized.optimizedSize,
+    originalSize: optimized.originalSize,
+  };
 }
 
 export async function deleteStorageFile(path) {
@@ -410,6 +553,3 @@ export function buildCompanySnapshot(company) {
     logoBase64: company.logoBase64 ?? "",
   };
 }
-
-
-
