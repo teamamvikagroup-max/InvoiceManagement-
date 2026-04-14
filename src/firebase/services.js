@@ -167,9 +167,30 @@ async function fileToDataUrl(file) {
     reader.readAsDataURL(file);
   });
 }
+
+function buildCompanyWritePayload(payload = {}, existingCompany = {}) {
+  return {
+    id: payload.id ?? existingCompany.id ?? "",
+    name: payload.name ?? existingCompany.name ?? "",
+    address: payload.address ?? existingCompany.address ?? "",
+    email: payload.email ?? existingCompany.email ?? "",
+    gstin: payload.gstin ?? existingCompany.gstin ?? "",
+    phone: payload.phone ?? existingCompany.phone ?? "",
+    website: payload.website ?? existingCompany.website ?? "",
+    logoUrl: payload.logoUrl || existingCompany.logoUrl || existingCompany.logoBase64 || "",
+    logoPath: payload.logoPath || existingCompany.logoPath || "",
+    logoBase64: payload.logoBase64 || existingCompany.logoBase64 || "",
+    ownerId: payload.ownerId ?? existingCompany.ownerId ?? "",
+  };
+}
+
+export function createCompanyId() {
+  return push(databaseRef("companies")).key;
+}
+
 export async function uploadCompanyLogo(companyId, file) {
   if (!file) {
-    return { logoUrl: "", logoPath: "" };
+    return { logoUrl: "", logoPath: "", logoBase64: "" };
   }
 
   if (!companyId) {
@@ -197,13 +218,13 @@ export async function uploadCompanyLogo(companyId, file) {
   );
 
   const logoBase64 = await fileToDataUrl(file);
-
   const logoUrl = await withTimeout(
     getDownloadURL(logoReference),
     FILE_URL_TIMEOUT_MS,
     "Logo URL generation timed out after upload.",
   );
 
+  console.info("Company logo upload result", { companyId, logoPath, logoUrl });
   return { logoUrl, logoPath, logoBase64 };
 }
 
@@ -220,43 +241,27 @@ export async function deleteStorageFile(path) {
   }
 }
 
-export async function createCompany(payload) {
-  const companiesReference = databaseRef("companies");
-  const companyReference = push(companiesReference);
-  const companyId = companyReference.key;
+export async function createCompany(payload, companyId = createCompanyId()) {
   const companyData = {
-    id: companyId,
-    name: payload.name ?? "",
-    address: payload.address ?? "",
-    email: payload.email ?? "",
-    gstin: payload.gstin ?? "",
-    phone: payload.phone ?? "",
-    website: payload.website ?? "",
-    logoUrl: payload.logoUrl ?? "",
-    logoPath: payload.logoPath ?? "",
-    logoBase64: payload.logoBase64 ?? "",
-    createdAt: Date.now(),
+    ...buildCompanyWritePayload({ ...payload, id: companyId }),
+    createdAt: payload.createdAt ?? Date.now(),
     updatedAt: Date.now(),
   };
 
-  await withTimeout(set(companyReference, companyData), DATABASE_WRITE_TIMEOUT_MS, "Saving company data timed out.");
+  console.info("Saving company payload", companyData);
+  await withTimeout(set(databaseRef(`companies/${companyId}`), companyData), DATABASE_WRITE_TIMEOUT_MS, "Saving company data timed out.");
   return { id: companyId, firebaseId: companyId };
 }
 
-export async function updateCompany(companyId, payload) {
+export async function updateCompany(companyId, payload, existingCompany = {}) {
+  const companyData = {
+    ...buildCompanyWritePayload({ ...payload, id: companyId }, existingCompany),
+    updatedAt: Date.now(),
+  };
+
+  console.info("Updating company payload", companyData);
   await withTimeout(
-    update(databaseRef(`companies/${companyId}`), {
-      name: payload.name ?? "",
-      address: payload.address ?? "",
-      email: payload.email ?? "",
-      gstin: payload.gstin ?? "",
-      phone: payload.phone ?? "",
-      website: payload.website ?? "",
-      logoUrl: payload.logoUrl ?? "",
-      logoPath: payload.logoPath ?? "",
-      logoBase64: payload.logoBase64 ?? "",
-      updatedAt: Date.now(),
-    }),
+    update(databaseRef(`companies/${companyId}`), companyData),
     DATABASE_WRITE_TIMEOUT_MS,
     "Updating company data timed out.",
   );
@@ -405,4 +410,6 @@ export function buildCompanySnapshot(company) {
     logoBase64: company.logoBase64 ?? "",
   };
 }
+
+
 

@@ -154,6 +154,9 @@ export default function DocumentForm({ type, companies }) {
     [preparedItems, formData.taxType, formData.paymentMade, type],
   );
 
+  const exportCompany = pdfCompany ?? selectedCompany;
+  const exportLogoSrc = exportCompany?.logoBase64 || exportCompany?.logoUrl || "";
+
   const rootChange = (field, value) => setFormData((current) => ({ ...current, [field]: value }));
   const customerChange = (field, value) => setFormData((current) => ({ ...current, customer: { ...current.customer, [field]: value } }));
 
@@ -260,12 +263,12 @@ export default function DocumentForm({ type, companies }) {
         <div className="glass-card p-4 md:p-6"><div className="mb-4"><h3 className="text-lg font-semibold text-slate-900 md:text-xl">Live PDF Preview</h3><p className="mt-1 text-sm text-slate-600 md:text-base">The generated PDF will use this template and current form values.</p></div><div className="max-h-[calc(100vh-14rem)] overflow-auto rounded-3xl border border-slate-200 bg-slate-100 p-4"><div className="mx-auto w-fit"><DocumentPreview type={type} invoiceNumber={nextNumber || "Preview"} dueDate={formData.dueDate} company={selectedCompany} customer={formData.customer} items={preparedItems} totals={totals} notes={formData.notes} terms={formData.terms} taxType={formData.taxType} /></div></div></div>
       </div>
       <div className="pointer-events-none fixed -left-[200vw] top-0 opacity-0">
-        <div ref={pdfRenderRef} data-pdf-template="PdfDocumentExportV3">
+        <div ref={pdfRenderRef} data-pdf-template="PdfDocumentExportV3" data-pdf-logo-src={exportLogoSrc}>
           <PdfDocument
             type={type}
             invoiceNumber={nextNumber || "Preview"}
             dueDate={formData.dueDate}
-            company={pdfCompany ?? selectedCompany}
+            company={exportCompany}
             customer={formData.customer}
             items={preparedItems}
             totals={totals}
@@ -278,6 +281,8 @@ export default function DocumentForm({ type, companies }) {
     </>
   );
 }
+
+
 
 
 

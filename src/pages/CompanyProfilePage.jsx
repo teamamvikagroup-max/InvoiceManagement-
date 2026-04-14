@@ -4,7 +4,7 @@ import EmptyState from "../components/EmptyState";
 import LoadingSpinner from "../components/LoadingSpinner";
 import StatusAlert from "../components/StatusAlert";
 import { firebaseDatabaseUrl } from "../firebase/config";
-import { createCompany, deleteCompany, deleteStorageFile, subscribeToCompanies, updateCompany, uploadCompanyLogo } from "../firebase/services";
+import { createCompany, createCompanyId, deleteCompany, deleteStorageFile, subscribeToCompanies, updateCompany, uploadCompanyLogo } from "../firebase/services";
 import { formatWebsite } from "../utils/formatters";
 
 const LOAD_TIMEOUT_MS = 8000;
@@ -95,6 +95,7 @@ export default function CompanyProfilePage() {
           logoUrl: activeCompany.logoUrl ?? activeCompany.logoBase64 ?? "",
           logoPath: activeCompany.logoPath ?? "",
           logoBase64: activeCompany.logoBase64 ?? "",
+          ownerId: activeCompany.ownerId ?? "",
         };
 
         if (logoFile) {
@@ -102,13 +103,14 @@ export default function CompanyProfilePage() {
           uploadedLogoPath = uploadedLogo.logoPath ?? "";
           nextPayload = {
             ...nextPayload,
-            logoUrl: uploadedLogo.logoUrl ?? nextPayload.logoUrl,
-            logoPath: uploadedLogo.logoPath ?? nextPayload.logoPath,
-            logoBase64: uploadedLogo.logoBase64 ?? nextPayload.logoBase64,
+            logoUrl: uploadedLogo.logoUrl || nextPayload.logoUrl,
+            logoPath: uploadedLogo.logoPath || nextPayload.logoPath,
+            logoBase64: uploadedLogo.logoBase64 || nextPayload.logoBase64,
           };
         }
 
-        await updateCompany(activeCompany.firebaseId ?? activeCompany.id, nextPayload);
+        console.info("Company update payload before DB save", nextPayload);
+        await updateCompany(activeCompany.firebaseId ?? activeCompany.id, nextPayload, activeCompany);
 
         setCompanies((current) =>
           current.map((company) =>
@@ -126,41 +128,36 @@ export default function CompanyProfilePage() {
           void deleteStorageFile(activeCompany.logoPath);
         }
       } else {
-        const createdCompany = await createCompany({
+        const companyId = createCompanyId();
+        let nextPayload = {
           ...values,
+          id: companyId,
           logoUrl: "",
           logoPath: "",
           logoBase64: "",
-        });
-
-        let nextCompany = {
-          firebaseId: createdCompany.firebaseId,
-          id: createdCompany.id,
-          ...values,
-          logoUrl: "",
-          logoPath: "",
-          logoBase64: "",
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
+          ownerId: values.ownerId ?? "",
         };
 
         if (logoFile) {
-          const uploadedLogo = await uploadCompanyLogo(createdCompany.firebaseId, logoFile);
+          const uploadedLogo = await uploadCompanyLogo(companyId, logoFile);
           uploadedLogoPath = uploadedLogo.logoPath ?? "";
-          await updateCompany(createdCompany.firebaseId, {
-            ...values,
-            logoUrl: uploadedLogo.logoUrl ?? "",
-            logoPath: uploadedLogo.logoPath ?? "",
-            logoBase64: uploadedLogo.logoBase64 ?? "",
-          });
-
-          nextCompany = {
-            ...nextCompany,
-            logoUrl: uploadedLogo.logoUrl ?? "",
-            logoPath: uploadedLogo.logoPath ?? "",
-            logoBase64: uploadedLogo.logoBase64 ?? "",
+          nextPayload = {
+            ...nextPayload,
+            logoUrl: uploadedLogo.logoUrl || nextPayload.logoUrl,
+            logoPath: uploadedLogo.logoPath || nextPayload.logoPath,
+            logoBase64: uploadedLogo.logoBase64 || nextPayload.logoBase64,
           };
         }
+
+        console.info("Company create payload before DB save", nextPayload);
+        const createdCompany = await createCompany(nextPayload, companyId);
+
+        const nextCompany = {
+          firebaseId: createdCompany.firebaseId,
+          ...nextPayload,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        };
 
         setCompanies((current) => [nextCompany, ...current]);
       }
@@ -207,6 +204,7 @@ export default function CompanyProfilePage() {
     </div>
   );
 }
+
 
 
 

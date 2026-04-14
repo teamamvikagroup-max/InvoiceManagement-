@@ -74,7 +74,20 @@ async function imageToDataUrl(url) {
   });
 }
 
-async function getLogoForPdf(container) {
+async function getLogoForPdf(element, container) {
+  const explicitLogoSrc = element?.dataset?.pdfLogoSrc || "";
+  if (explicitLogoSrc) {
+    if (explicitLogoSrc.startsWith("data:image/")) {
+      return explicitLogoSrc;
+    }
+
+    try {
+      return await imageToDataUrl(explicitLogoSrc);
+    } catch (error) {
+      console.warn("[PDF Export] explicit logo extraction failed", error);
+    }
+  }
+
   const logoImage = container.querySelector("img");
   if (!logoImage?.src) {
     return null;
@@ -121,7 +134,7 @@ export async function generatePdfBlob(element, filename) {
 
   try {
     await waitForCloneImages(clone);
-    const logoDataUrl = await getLogoForPdf(clone);
+    const logoDataUrl = await getLogoForPdf(element, clone);
 
     const worker = html2pdf()
       .set({
