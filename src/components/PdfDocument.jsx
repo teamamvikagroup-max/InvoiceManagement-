@@ -18,7 +18,7 @@ function getHeadingStyle(value, baseSize, compactSize) {
 const styles = {
   page: {
     width: "794px",
-    backgroundColor: "#ffffff",
+    backgroundColor: "rgba(255,255,255,0.98)",
     color: "#0f172a",
     fontFamily: '"Noto Sans", "Noto Sans Devanagari", "Segoe UI Symbol", "Arial Unicode MS", Arial, sans-serif',
     fontSize: "12px",
@@ -28,17 +28,17 @@ const styles = {
   headerRow: {
     display: "flex",
     justifyContent: "space-between",
-    gap: "28px",
-    alignItems: "center",
+    gap: "32px",
+    alignItems: "flex-start",
     borderBottom: "1px solid #cbd5e1",
-    paddingBottom: "18px",
+    paddingBottom: "20px",
   },
   detailsColumn: {
     maxWidth: "450px",
     minWidth: 0,
   },
   rightColumn: {
-    width: "248px",
+    width: "236px",
     display: "flex",
     flexDirection: "column",
     alignItems: "flex-end",
@@ -46,24 +46,24 @@ const styles = {
   },
   logoArea: {
     width: "100%",
-    minHeight: "88px",
+    minHeight: "110px",
     display: "flex",
-    justifyContent: "flex-end",
-    alignItems: "center",
+    justifyContent: "center",
+    alignItems: "flex-start",
   },
   logoFrame: {
-    border: "1px solid #dbe4ff",
-    borderRadius: "16px",
-    padding: "10px 14px",
-    backgroundColor: "#ffffff",
-    boxShadow: "0 10px 22px rgba(15, 23, 42, 0.06)",
+    border: "none",
+    borderRadius: "20px",
+    padding: "14px 18px",
+    backgroundColor: "rgba(255,255,255,0.98)",
+    boxShadow: "0 14px 28px rgba(15, 23, 42, 0.08)",
   },
   billSummaryRow: {
     ...avoidBreak,
     display: "flex",
     justifyContent: "space-between",
-    gap: "28px",
-    alignItems: "center",
+    gap: "32px",
+    alignItems: "flex-start",
     marginTop: "16px",
   },
   billColumn: {
@@ -78,26 +78,26 @@ const styles = {
     fontWeight: 700,
   },
   titleBox: {
-    border: "1px solid #dbe4ff",
+    border: "none",
     background: "linear-gradient(180deg, #eef2ff 0%, #e0e7ff 100%)",
-    borderRadius: "16px",
+    borderRadius: "20px",
     padding: "14px 16px",
     width: "100%",
-    marginTop: "18px",
+    marginTop: "14px",
     boxShadow: "0 14px 28px rgba(99, 102, 241, 0.12)",
   },
   section: {
-    marginTop: "18px",
+    marginTop: "14px",
   },
   table: {
     width: "100%",
     borderCollapse: "collapse",
     marginTop: "10px",
-    borderRadius: "16px",
+    borderRadius: "20px",
     overflow: "hidden",
   },
   cell: {
-    border: "1px solid #dbe4ff",
+    border: "none",
     padding: "8px 10px",
     textAlign: "left",
     verticalAlign: "top",
@@ -111,8 +111,8 @@ const styles = {
     ...avoidBreak,
     display: "flex",
     gap: "18px",
-    alignItems: "center",
-    marginTop: "18px",
+    alignItems: "flex-start",
+    marginTop: "14px",
   },
   leftColumn: {
     ...avoidBreak,
@@ -123,10 +123,10 @@ const styles = {
   },
   wordsBox: {
     ...avoidBreak,
-    border: "1px solid #dbe4ff",
-    borderRadius: "16px",
+    border: "none",
+    borderRadius: "20px",
     padding: "14px 16px",
-    backgroundColor: "#ffffff",
+    backgroundColor: "rgba(255,255,255,0.98)",
   },
   divider: {
     marginTop: "12px",
@@ -136,8 +136,8 @@ const styles = {
   totals: {
     ...avoidBreak,
     width: "340px",
-    border: "1px solid #dbe4ff",
-    borderRadius: "16px",
+    border: "none",
+    borderRadius: "20px",
     overflow: "hidden",
     backgroundColor: "#f8fafc",
     flexShrink: 0,
@@ -153,22 +153,22 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     gap: "18px",
-    alignItems: "center",
-    marginTop: "18px",
+    alignItems: "flex-start",
+    marginTop: "14px",
   },
   notesCard: {
     ...avoidBreak,
     width: "68%",
     border: "1px solid #e2e8f0",
-    borderRadius: "16px",
+    borderRadius: "20px",
     padding: "12px 14px",
-    backgroundColor: "#ffffff",
+    backgroundColor: "rgba(255,255,255,0.98)",
   },
   secondaryCard: {
     ...avoidBreak,
     width: "32%",
     border: "1px solid #e2e8f0",
-    borderRadius: "16px",
+    borderRadius: "20px",
     padding: "12px 14px",
     backgroundColor: "#f8fafc",
     minHeight: "84px",
@@ -196,9 +196,9 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
           <div style={styles.logoArea}>
             {logoSrc ? (
               <div style={styles.logoFrame}>
-                <img src={logoSrc} alt={company?.name || "Company logo"} style={{ height: "78px", width: "auto", maxWidth: "188px", objectFit: "contain", display: "block" }} crossOrigin="anonymous" />
+                <img src={logoSrc} alt={company?.name || "Company logo"} style={{ height: "84px", width: "auto", maxWidth: "182px", objectFit: "contain", display: "block", margin: "0 auto" }} crossOrigin="anonymous" />
               </div>
-             ) : (<div style={{ width: "188px", height: "78px", marginRight: "2px" }} />)}
+             ) : (<div style={{ width: "182px", height: "84px" }} />)}
           </div>
         </div>
       </div>
@@ -293,5 +293,6 @@ export default function PdfDocument({ type, invoiceNumber, dueDate, company, cus
     </div>
   );
 }
+
 
 

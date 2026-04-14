@@ -112,21 +112,51 @@ function getImageFormat(dataUrl) {
   return "PNG";
 }
 
-function addLogoToPdf(pdf, logoDataUrl) {
+async function getImageDimensions(dataUrl) {
+  return await new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve({ width: image.naturalWidth || 1, height: image.naturalHeight || 1 });
+    image.onerror = () => reject(new Error("Unable to measure logo image for PDF."));
+    image.src = dataUrl;
+  });
+}
+
+async function addLogoToPdf(pdf, logoDataUrl) {
   if (!logoDataUrl) {
     return;
   }
 
   const pageWidth = pdf.internal.pageSize.getWidth();
-  const x = pageWidth - 1.82;
-  const y = 0.43;
-  const width = 1.18;
-  const height = 0.72;
+  const frameX = pageWidth - 1.98;
+  const frameY = 0.38;
+  const frameWidth = 1.42;
+  const frameHeight = 0.98;
+  const padding = 0.10;
 
-  pdf.setPage(1);
-  pdf.setFillColor(255, 255, 255);
-  pdf.roundedRect(x - 0.06, y - 0.04, width + 0.12, height + 0.08, 0.12, 0.12, "F");
-  pdf.addImage(logoDataUrl, getImageFormat(logoDataUrl), x, y, width, height, undefined, "FAST");
+  try {
+    const { width, height } = await getImageDimensions(logoDataUrl);
+    const usableWidth = frameWidth - padding * 2;
+    const usableHeight = frameHeight - padding * 2;
+    const imageRatio = width / height;
+    const frameRatio = usableWidth / usableHeight;
+
+    let renderWidth = usableWidth;
+    let renderHeight = usableHeight;
+
+    if (imageRatio > frameRatio) {
+      renderHeight = usableWidth / imageRatio;
+    } else {
+      renderWidth = usableHeight * imageRatio;
+    }
+
+    const renderX = frameX + (frameWidth - renderWidth) / 2;
+    const renderY = frameY + (frameHeight - renderHeight) / 2;
+
+    pdf.setPage(1);
+    pdf.addImage(logoDataUrl, getImageFormat(logoDataUrl), renderX, renderY, renderWidth, renderHeight, undefined, "FAST");
+  } catch (error) {
+    console.warn("[PDF Export] direct logo placement failed", error);
+  }
 }
 
 export async function generatePdfBlob(element, filename) {
@@ -162,7 +192,7 @@ export async function generatePdfBlob(element, filename) {
       .toPdf();
 
     const pdf = await worker.get("pdf");
-    addLogoToPdf(pdf, logoDataUrl);
+    await addLogoToPdf(pdf, logoDataUrl);
 
     const pageCount = pdf.internal.getNumberOfPages();
     const pageWidth = pdf.internal.pageSize.getWidth();
@@ -185,3 +215,4 @@ export async function generatePdfBlob(element, filename) {
     wrapper.remove();
   }
 }
+

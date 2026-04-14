@@ -12,7 +12,7 @@ export default function DocumentPreview({ type, invoiceNumber, dueDate, company,
 
   return (
     <div className="w-[794px] bg-white px-9 pb-20 pt-8 font-['Noto_Sans','Noto_Sans_Devanagari','Segoe_UI_Symbol','Arial_Unicode_MS','Arial',sans-serif] text-slate-900">
-      <div className="flex items-start justify-between gap-7 border-b border-slate-200 pb-6">
+      <div className="flex items-start justify-between gap-8 border-b border-slate-200 pb-6">
         <div className="max-w-[450px] min-w-0">
           <h1 className={headingClass(company?.name, "text-3xl font-bold", "text-[1.65rem] font-bold")}>{company?.name || "Company Name"}</h1>
           <p className="mt-3 whitespace-pre-line break-words text-sm leading-6 text-slate-600">{company?.address || "-"}</p>
@@ -24,13 +24,13 @@ export default function DocumentPreview({ type, invoiceNumber, dueDate, company,
           </div>
         </div>
 
-        <div className="flex w-[248px] flex-shrink-0 justify-end">
-          <div className="flex min-h-[88px] w-full items-center justify-end">
+        <div className="flex w-[236px] flex-shrink-0 justify-center">
+          <div className="flex min-h-[110px] w-full items-center justify-center">
             {logoSrc ? (
-              <div className="rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 shadow-[0_10px_22px_rgba(15,23,42,0.06)]">
-                <img src={logoSrc} alt={company?.name || "Company logo"} className="block h-[78px] w-auto max-w-[188px] object-contain" />
+              <div className="rounded-[20px] bg-white/95 px-[18px] py-[14px] shadow-[0_14px_28px_rgba(15,23,42,0.08)]">
+                <img src={logoSrc} alt={company?.name || "Company logo"} className="block h-[84px] w-auto max-w-[182px] object-contain" />
               </div>
-             ) : (<div className="h-[78px] w-[188px] mr-[2px]" />)}
+             ) : (<div className="h-[84px] w-[182px]" />)}
           </div>
         </div>
       </div>
@@ -49,8 +49,8 @@ export default function DocumentPreview({ type, invoiceNumber, dueDate, company,
           </div>
         </div>
 
-        <div className="w-[248px] flex-shrink-0">
-          <div className="mt-[18px] rounded-2xl border border-indigo-100 bg-gradient-to-b from-indigo-50 to-indigo-100/80 px-6 py-5 shadow-[0_14px_28px_rgba(99,102,241,0.12)]">
+        <div className="w-[236px] flex-shrink-0">
+          <div className="mt-[14px] rounded-2xl border border-indigo-100 bg-gradient-to-b from-indigo-50 to-indigo-100/80 px-6 py-5 shadow-[0_14px_28px_rgba(99,102,241,0.12)]">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">{type === "invoice" ? "Tax Invoice" : "Quotation"}</p>
             <p className="mt-3 break-words text-2xl font-semibold text-slate-900">{invoiceNumber}</p>
             <div className="mt-4 space-y-2 text-sm text-slate-700">
@@ -125,3 +125,4 @@ export default function DocumentPreview({ type, invoiceNumber, dueDate, company,
     </div>
   );
 }
+
