@@ -1,22 +1,36 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import StatusAlert from "../components/StatusAlert";
 import { useAuth } from "../context/AuthContext";
+
+const RESET_ELIGIBLE_CODES = new Set([
+  "auth/wrong-password",
+  "auth/invalid-credential",
+  "auth/user-not-found",
+]);
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { loginWithEmail, getAuthErrorMessage } = useAuth();
+  const { loginWithEmail, sendResetPasswordEmail, getAuthErrorMessage } = useAuth();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [status, setStatus] = useState(null);
+  const [lastLoginErrorCode, setLastLoginErrorCode] = useState("");
 
   const redirectTo = location.state?.from || "/";
+
+  const canShowForgotPassword = useMemo(
+    () => Boolean(formData.email.trim()) && RESET_ELIGIBLE_CODES.has(lastLoginErrorCode),
+    [formData.email, lastLoginErrorCode],
+  );
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsSubmitting(true);
     setStatus(null);
+    setLastLoginErrorCode("");
 
     try {
       await loginWithEmail(formData.email, formData.password);
@@ -24,9 +38,30 @@ export default function LoginPage() {
       navigate(redirectTo, { replace: true });
     } catch (error) {
       console.error("Email login failed", error);
+      setLastLoginErrorCode(error?.code ?? "");
       setStatus({ type: "error", message: getAuthErrorMessage(error) });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!formData.email.trim()) {
+      setStatus({ type: "error", message: "Enter your email address first, then use Forgot Password." });
+      return;
+    }
+
+    setIsResettingPassword(true);
+    setStatus(null);
+
+    try {
+      await sendResetPasswordEmail(formData.email);
+      setStatus({ type: "success", message: `Password reset link sent to ${formData.email.trim()}. Please check your inbox.` });
+    } catch (error) {
+      console.error("Password reset failed", error);
+      setStatus({ type: "error", message: getAuthErrorMessage(error) });
+    } finally {
+      setIsResettingPassword(false);
     }
   };
 
@@ -60,7 +95,19 @@ export default function LoginPage() {
               onChange={(event) => setFormData((current) => ({ ...current, password: event.target.value }))}
             />
           </div>
-          <button type="submit" className="btn-primary w-full" disabled={isSubmitting}>
+          {canShowForgotPassword ? (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                className="text-sm font-medium text-brand-700 transition hover:text-brand-800 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={handleForgotPassword}
+                disabled={isResettingPassword || isSubmitting}
+              >
+                {isResettingPassword ? "Sending reset link..." : "Forgot Password?"}
+              </button>
+            </div>
+          ) : null}
+          <button type="submit" className="btn-primary w-full" disabled={isSubmitting || isResettingPassword}>
             {isSubmitting ? "Signing in..." : "Login"}
           </button>
         </form>
@@ -68,4 +115,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

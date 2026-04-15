@@ -3,6 +3,7 @@ import {
   browserLocalPersistence,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   setPersistence,
   signInWithEmailAndPassword,
   signInWithPhoneNumber,
@@ -72,6 +73,15 @@ export async function loginWithEmail(email, password) {
   return credential.user;
 }
 
+export async function sendResetPasswordEmail(email) {
+  await ensureAuthPersistence();
+  if (!email?.trim()) {
+    throw new Error("Enter your email address first to reset the password.");
+  }
+
+  await sendPasswordResetEmail(auth, email.trim());
+}
+
 export function createPhoneRecaptcha(containerId) {
   return new RecaptchaVerifier(auth, containerId, {
     size: "invisible",
@@ -102,6 +112,8 @@ export function getAuthErrorMessage(error) {
       return "This email is already registered. Please log in instead.";
     case "auth/invalid-email":
       return "Enter a valid email address.";
+    case "auth/missing-email":
+      return "Enter your email address to continue.";
     case "auth/weak-password":
       return "Password should be at least 6 characters long.";
     case "auth/user-not-found":
