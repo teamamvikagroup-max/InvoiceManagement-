@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import StatusAlert from "../components/StatusAlert";
 import { useAuth } from "../context/AuthContext";
@@ -64,12 +64,8 @@ export default function LoginPage() {
             {isSubmitting ? "Signing in..." : "Login"}
           </button>
         </form>
-
-        <div className="mt-6 grid gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-          <Link to="/signup" className="font-medium text-brand-700 hover:underline">Create a new account</Link>
-          <Link to="/otp-login" className="font-medium text-brand-700 hover:underline">Login with phone number and OTP</Link>
-        </div>
       </div>
     </div>
   );
 }
+
