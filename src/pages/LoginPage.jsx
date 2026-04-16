@@ -14,6 +14,7 @@ export default function LoginPage() {
   const location = useLocation();
   const { loginWithEmail, sendResetPasswordEmail, getAuthErrorMessage } = useAuth();
   const [formData, setFormData] = useState({ email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [status, setStatus] = useState(null);
@@ -87,13 +88,35 @@ export default function LoginPage() {
           </div>
           <div>
             <label className="field-label">Password</label>
-            <input
-              type="password"
-              required
-              className="input-field"
-              value={formData.password}
-              onChange={(event) => setFormData((current) => ({ ...current, password: event.target.value }))}
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                className="input-field pr-14"
+                value={formData.password}
+                onChange={(event) => setFormData((current) => ({ ...current, password: event.target.value }))}
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute inset-y-0 right-4 flex items-center text-slate-500 transition hover:text-brand-700"
+                onClick={() => setShowPassword((current) => !current)}
+              >
+                {showPassword ? (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.58 10.58A2 2 0 0012 14a2 2 0 001.42-.58" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.88 4.24A10.94 10.94 0 0112 4c5 0 9.27 3.11 11 8-1.01 2.86-2.96 5.14-5.48 6.47" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.61 6.62C4.62 7.91 3.08 9.78 2 12c.72 1.98 1.88 3.7 3.35 5.01" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
           {canShowForgotPassword ? (
             <div className="flex justify-end">
