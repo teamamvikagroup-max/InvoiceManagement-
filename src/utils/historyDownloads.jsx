@@ -32,23 +32,37 @@ export async function downloadHistoryZip(records, type, label, onProgress) {
     throw new Error("No PDF URLs are available for the selected records.");
   }
 
-  const { default: JSZip } = await import("jszip");
-  const zip = new JSZip();
-
-  for (let index = 0; index < validRecords.length; index += 1) {
-    const record = validRecords[index];
+  validRecords.forEach((record, index) => {
     onProgress?.({ current: index + 1, total: validRecords.length, record });
-    const response = await fetch(record.pdfUrl);
+  });
 
-    if (!response.ok) {
-      throw new Error(`Unable to fetch ${record.invoiceNumber || `${type}-${index + 1}`}.pdf from Firebase Storage.`);
+  const response = await fetch("/api/history-zip", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      type,
+      label,
+      records: validRecords.map((record) => ({
+        invoiceNumber: record.invoiceNumber,
+        pdfUrl: record.pdfUrl,
+      })),
+    }),
+  });
+
+  if (!response.ok) {
+    let message = `Unable to download ${type} ZIP right now.`;
+    try {
+      const payload = await response.json();
+      message = payload?.error || message;
+    } catch {
+      // ignore JSON parse failures and fall back to the default message
     }
-
-    const pdfBlob = await response.blob();
-    zip.file(`${record.invoiceNumber || `${type}-${index + 1}`}.pdf`, pdfBlob);
+    throw new Error(message);
   }
 
-  const zipBlob = await zip.generateAsync({ type: "blob" });
+  const zipBlob = await response.blob();
   const objectUrl = URL.createObjectURL(zipBlob);
   const link = document.createElement("a");
   link.href = objectUrl;
