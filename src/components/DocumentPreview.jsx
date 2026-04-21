@@ -5,7 +5,7 @@ function headingClass(value, baseClass, compactClass) {
   return `${value && value.length > 28 ? compactClass : baseClass} break-words`;
 }
 
-export default function DocumentPreview({ type, invoiceNumber, dueDate, company, customer, items, totals, notes, terms, taxType }) {
+export default function DocumentPreview({ type, invoiceNumber, financialYear, dueDate, company, customer, items, totals, notes, terms, taxType }) {
   const englishAmountInWords = formatAmountInWordsEnglish(totals.totalAmount);
   const logoSrc = company?.logoUrl || company?.logoBase64 || "";
 
@@ -53,6 +53,7 @@ export default function DocumentPreview({ type, invoiceNumber, dueDate, company,
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">{type === "invoice" ? "Tax Invoice" : "Quotation"}</p>
             <p className="mt-3 break-words text-2xl font-semibold text-slate-900">{invoiceNumber}</p>
             <div className="mt-4 space-y-2 text-sm text-slate-700">
+              {type === "invoice" && financialYear ? <p>FY: {financialYear}</p> : null}
               <p>Due Date: {formatDate(dueDate)}</p>
               <p>Tax Mode: {taxType === "igst" ? "IGST 18%" : "CGST 9% + SGST 9%"}</p>
             </div>
@@ -122,5 +123,6 @@ export default function DocumentPreview({ type, invoiceNumber, dueDate, company,
     </div>
   );
 }
+
 
 

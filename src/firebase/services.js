@@ -16,6 +16,7 @@ import {
   uploadBytesResumable,
 } from "firebase/storage";
 import { assertDatabaseConfigured, assertStorageConfigured } from "./config";
+import { getFinancialYear, getFinancialYearFromInvoiceNumber, getNextInvoiceNumber } from "../utils/invoiceNumbering";
 
 const PDF_UPLOAD_TIMEOUT_MS = 90000;
 const DATABASE_WRITE_TIMEOUT_MS = 20000;
@@ -96,6 +97,7 @@ function normalizeDocument(type, company, documentKey, documentValue) {
       gstin: documentValue.clientGstin ?? "",
     },
     invoiceNumber: documentValue.invoiceNumber ?? documentValue.quotationNumber ?? "",
+    financialYear: documentValue.financialYear ?? getFinancialYearFromInvoiceNumber(documentValue.invoiceNumber ?? documentValue.quotationNumber ?? ""),
     dueDate: documentValue.dueDate ?? "",
     items,
     subtotal: Number(documentValue.subtotal ?? 0),
@@ -417,22 +419,51 @@ export async function deleteCompany(company) {
   }
 }
 
-function counterPath(type) {
-  return `meta/counters/${type === "invoice" ? "invoice" : "quotation"}`;
+function quotationCounterPath() {
+  return "meta/counters/quotation";
+}
+
+function invoiceCounterPath(financialYear) {
+  return `meta/invoiceCounters/${financialYear}`;
 }
 
 export async function peekNextDocumentNumber(type) {
-  const snapshot = await get(databaseRef(counterPath(type)));
+  if (type === "invoice") {
+    const financialYear = getFinancialYear();
+    const snapshot = await get(databaseRef(invoiceCounterPath(financialYear)));
+    const value = snapshot.exists() ? Number(snapshot.val() ?? 0) : 0;
+    return getNextInvoiceNumber(value + 1);
+  }
+
+  const snapshot = await get(databaseRef(quotationCounterPath()));
   const value = snapshot.exists() ? Number(snapshot.val() ?? 0) : 0;
-  const prefix = type === "invoice" ? "INV" : "QTN";
-  return `${prefix}-${String(value + 1).padStart(6, "0")}`;
+  return `QTN-${String(value + 1).padStart(6, "0")}`;
 }
 
 export async function reserveDocumentNumber(type) {
-  const snapshot = await runTransaction(databaseRef(counterPath(type)), (currentValue) => Number(currentValue ?? 0) + 1);
+  if (type === "invoice") {
+    const financialYear = getFinancialYear();
+    const snapshot = await runTransaction(
+      databaseRef(invoiceCounterPath(financialYear)),
+      (currentValue) => Number(currentValue ?? 0) + 1,
+    );
+    const next = Number(snapshot.snapshot.val() ?? 1);
+
+    return {
+      documentNumber: getNextInvoiceNumber(next),
+      financialYear,
+      sequence: next,
+    };
+  }
+
+  const snapshot = await runTransaction(databaseRef(quotationCounterPath()), (currentValue) => Number(currentValue ?? 0) + 1);
   const next = Number(snapshot.snapshot.val() ?? 1);
-  const prefix = type === "invoice" ? "INV" : "QTN";
-  return `${prefix}-${String(next).padStart(6, "0")}`;
+
+  return {
+    documentNumber: `QTN-${String(next).padStart(6, "0")}`,
+    financialYear: "",
+    sequence: next,
+  };
 }
 
 export async function uploadDocumentPdf(type, documentNumber, blob) {
@@ -488,6 +519,7 @@ export async function saveInvoiceRecord(payload) {
 
   if (payload.type === "invoice") {
     documentData.invoiceNumber = payload.invoiceNumber;
+    documentData.financialYear = payload.financialYear || getFinancialYearFromInvoiceNumber(payload.invoiceNumber);
     documentData.paymentStatus = Number(payload.balanceAmount ?? 0) > 0 ? "unpaid" : "paid";
   } else {
     documentData.quotationNumber = payload.invoiceNumber;
@@ -553,3 +585,4 @@ export function buildCompanySnapshot(company) {
     logoBase64: company.logoBase64 ?? "",
   };
 }
+
