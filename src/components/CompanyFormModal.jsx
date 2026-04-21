@@ -57,32 +57,45 @@ export default function CompanyFormModal({ isOpen, company, onClose, onSubmit, i
         : "Save Company";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
-      <div className="glass-card w-full max-w-3xl p-6">
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-semibold text-slate-900">{company ? "Edit Company Profile" : "Add Company Profile"}</h2>
-            <p className="mt-2 text-sm text-slate-600">Save branding, GST details, contact information, and a reusable company logo.</p>
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/45 p-4 backdrop-blur-sm">
+      <div className="flex min-h-full items-start justify-center py-2 sm:items-center sm:py-6">
+        <div className="glass-card flex max-h-[calc(100vh-1rem)] w-full max-w-3xl flex-col overflow-hidden sm:max-h-[calc(100vh-3rem)]">
+          <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
+            <div>
+              <h2 className="text-2xl font-semibold text-slate-900">{company ? "Edit Company Profile" : "Add Company Profile"}</h2>
+              <p className="mt-2 text-sm text-slate-600">Save branding, GST details, contact information, and a reusable company logo.</p>
+            </div>
+            <button type="button" className="btn-secondary px-4 py-2" onClick={onClose} disabled={isSubmitting}>Close</button>
           </div>
-          <button type="button" className="btn-secondary px-4 py-2" onClick={onClose} disabled={isSubmitting}>Close</button>
+
+          <form className="flex min-h-0 flex-1 flex-col" onSubmit={submit}>
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+              <div className="grid gap-5 md:grid-cols-2">
+                <div className="md:col-span-2"><label className="field-label">Company Name</label><input required name="name" value={formData.name} onChange={change} className="input-field" /></div>
+                <div className="md:col-span-2"><label className="field-label">Address</label><textarea required name="address" rows="3" value={formData.address} onChange={change} className="input-field" /></div>
+                <div><label className="field-label">GSTIN</label><input name="gstin" value={formData.gstin} onChange={change} className="input-field" /></div>
+                <div><label className="field-label">Phone</label><input name="phone" value={formData.phone} onChange={change} className="input-field" /></div>
+                <div><label className="field-label">Email</label><input type="email" name="email" value={formData.email} onChange={change} className="input-field" /></div>
+                <div><label className="field-label">Website</label><input name="website" value={formData.website} onChange={change} className="input-field" /></div>
+                <div className="md:col-span-2">
+                  <label className="field-label">Logo</label>
+                  <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp" className="input-field file:mr-4 file:rounded-xl file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:font-semibold file:text-brand-700" onChange={handleLogoChange} disabled={isSubmitting} />
+                  <p className="mt-2 text-xs text-slate-500">Supported formats: PNG, JPG, JPEG, WEBP. Large images are optimized automatically before upload.</p>
+                  {logoError ? <p className="mt-2 text-sm font-medium text-rose-600">{logoError}</p> : null}
+                  {isUploadingLogo ? <div className="mt-3 rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm font-medium text-brand-700">Uploading logo{logoUploadProgress ? `... ${logoUploadProgress}%` : "..."}</div> : null}
+                  {currentLogo ? <div className="mt-4 flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4"><img src={currentLogo} alt={company?.name || "Company logo"} className="h-16 w-16 rounded-2xl object-cover" /><p className="text-sm text-slate-600">Current logo will remain until you upload a replacement.</p></div> : null}
+                </div>
+              </div>
+            </div>
+
+            <div className="shrink-0 border-t border-slate-200 bg-white/85 px-6 py-4 backdrop-blur-sm">
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button type="button" className="btn-secondary" onClick={onClose} disabled={isSubmitting}>Cancel</button>
+                <button type="submit" className="btn-primary" disabled={isSubmitting || Boolean(logoError)}>{saveLabel}</button>
+              </div>
+            </div>
+          </form>
         </div>
-        <form className="grid gap-5 md:grid-cols-2" onSubmit={submit}>
-          <div className="md:col-span-2"><label className="field-label">Company Name</label><input required name="name" value={formData.name} onChange={change} className="input-field" /></div>
-          <div className="md:col-span-2"><label className="field-label">Address</label><textarea required name="address" rows="3" value={formData.address} onChange={change} className="input-field" /></div>
-          <div><label className="field-label">GSTIN</label><input name="gstin" value={formData.gstin} onChange={change} className="input-field" /></div>
-          <div><label className="field-label">Phone</label><input name="phone" value={formData.phone} onChange={change} className="input-field" /></div>
-          <div><label className="field-label">Email</label><input type="email" name="email" value={formData.email} onChange={change} className="input-field" /></div>
-          <div><label className="field-label">Website</label><input name="website" value={formData.website} onChange={change} className="input-field" /></div>
-          <div className="md:col-span-2">
-            <label className="field-label">Logo</label>
-            <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp" className="input-field file:mr-4 file:rounded-xl file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:font-semibold file:text-brand-700" onChange={handleLogoChange} disabled={isSubmitting} />
-            <p className="mt-2 text-xs text-slate-500">Supported formats: PNG, JPG, JPEG, WEBP. Large images are optimized automatically before upload.</p>
-            {logoError ? <p className="mt-2 text-sm font-medium text-rose-600">{logoError}</p> : null}
-            {isUploadingLogo ? <div className="mt-3 rounded-2xl border border-brand-100 bg-brand-50 px-4 py-3 text-sm font-medium text-brand-700">Uploading logo{logoUploadProgress ? `... ${logoUploadProgress}%` : "..."}</div> : null}
-            {currentLogo ? <div className="mt-4 flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4"><img src={currentLogo} alt={company?.name || "Company logo"} className="h-16 w-16 rounded-2xl object-cover" /><p className="text-sm text-slate-600">Current logo will remain until you upload a replacement.</p></div> : null}
-          </div>
-          <div className="md:col-span-2 flex justify-end gap-3"><button type="button" className="btn-secondary" onClick={onClose} disabled={isSubmitting}>Cancel</button><button type="submit" className="btn-primary" disabled={isSubmitting || Boolean(logoError)}>{saveLabel}</button></div>
-        </form>
       </div>
     </div>
   );
