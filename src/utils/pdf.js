@@ -159,6 +159,17 @@ async function addLogoToPdf(pdf, logoDataUrl) {
   }
 }
 
+export function downloadPdfBlob(blob, filename) {
+  const downloadUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = downloadUrl;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+}
+
 export async function generatePdfBlob(element, filename) {
   const { wrapper, clone } = createExportClone(element);
 
@@ -215,5 +226,3 @@ export async function generatePdfBlob(element, filename) {
     wrapper.remove();
   }
 }
-
-

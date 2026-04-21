@@ -10,7 +10,7 @@ import {
 } from "../firebase/services";
 import { createEmptyItem, DEFAULT_NOTES, DEFAULT_TERMS, EMPTY_CUSTOMER, TAX_TYPES } from "../utils/constants";
 import { calculateItemTotal, calculateTotals, formatCurrency } from "../utils/calculations";
-import { generatePdfBlob } from "../utils/pdf";
+import { downloadPdfBlob, generatePdfBlob } from "../utils/pdf";
 import { getFinancialYearFromInvoiceNumber } from "../utils/invoiceNumbering";
 import DocumentPreview from "./DocumentPreview";
 import EmptyState from "./EmptyState";
@@ -184,6 +184,7 @@ export default function DocumentForm({ type, companies }) {
       const reservation = await reserveDocumentNumber(type);
       const invoiceNumber = reservation.documentNumber;
       const financialYear = reservation.financialYear || "";
+      const documentLabel = type === "invoice" ? "Invoice" : "Quotation";
 
       setPdfCompany(preparedCompanyForPdf);
       setPdfDocumentNumber(invoiceNumber);
@@ -200,9 +201,9 @@ export default function DocumentForm({ type, companies }) {
       });
 
       const pdfBlob = await generatePdfBlob(pdfRenderRef.current, filename);
-      const { pdfUrl, pdfPath } = await uploadDocumentPdf(type, invoiceNumber, pdfBlob);
+      downloadPdfBlob(pdfBlob, filename);
 
-      await saveInvoiceRecord({
+      const historyPayload = {
         invoiceNumber,
         financialYear,
         type,
@@ -221,20 +222,32 @@ export default function DocumentForm({ type, companies }) {
         balanceAmount: totals.balanceAmount,
         notes: formData.notes,
         terms: formData.terms,
-        pdfUrl,
-        pdfPath,
-        pdfStatus: "uploaded",
-      });
+      };
 
-      setStatus({
-        type: "success",
-        message: `${type === "invoice" ? "Invoice" : "Quotation"} ${invoiceNumber} saved successfully. The PDF is now stored in Firebase Storage and available from history.`,
-      });
-
+      setStatus({ type: "info", message: `${documentLabel} ${invoiceNumber} downloaded. Saving to history...` });
       await resetForm();
+
+      void (async () => {
+        try {
+          const { pdfUrl, pdfPath } = await uploadDocumentPdf(type, invoiceNumber, pdfBlob);
+          await saveInvoiceRecord({
+            ...historyPayload,
+            pdfUrl,
+            pdfPath,
+            pdfStatus: "uploaded",
+          });
+          setStatus({ type: "success", message: `${documentLabel} ${invoiceNumber} saved to history.` });
+        } catch (backgroundError) {
+          console.error("Background document save failed", backgroundError);
+          setStatus({
+            type: "error",
+            message: `${documentLabel} ${invoiceNumber} downloaded successfully, but saving to history failed. Please try again later.`,
+          });
+        }
+      })();
     } catch (saveError) {
-      console.error("Document save failed", saveError);
-      setStatus({ type: "error", message: saveError?.message || "Unable to generate and save the document." });
+      console.error("Document generation failed", saveError);
+      setStatus({ type: "error", message: saveError?.message || "Unable to generate the document." });
     } finally {
       setIsSaving(false);
     }
@@ -402,7 +415,7 @@ export default function DocumentForm({ type, companies }) {
                     ) : null}
                   </div>
                   <button type="submit" className="btn-primary mt-6 w-full" disabled={isSaving}>
-                    {isSaving ? `Uploading ${type === "invoice" ? "invoice" : "quotation"}...` : type === "invoice" ? "Generate Invoice PDF" : "Generate Quotation PDF"}
+                    {isSaving ? `Generating ${type === "invoice" ? "invoice" : "quotation"} PDF...` : type === "invoice" ? "Generate Invoice PDF" : "Generate Quotation PDF"}
                   </button>
                 </div>
               </div>
