@@ -53,7 +53,7 @@ export default function DocumentPreview({ type, invoiceNumber, financialYear, du
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">{type === "invoice" ? "Tax Invoice" : "Quotation"}</p>
             <p className="mt-3 break-words text-2xl font-semibold text-slate-900">{invoiceNumber}</p>
             <div className="mt-4 space-y-2 text-sm text-slate-700">
-              {type === "invoice" && financialYear ? <p>FY: {financialYear}</p> : null}
+              {financialYear ? <p>FY: {financialYear}</p> : null}
               <p>Due Date: {formatDate(dueDate)}</p>
               <p>Tax Mode: {taxType === "igst" ? "IGST 18%" : "CGST 9% + SGST 9%"}</p>
             </div>
@@ -122,6 +122,7 @@ export default function DocumentPreview({ type, invoiceNumber, financialYear, du
     </div>
   );
 }
+
 
 
 

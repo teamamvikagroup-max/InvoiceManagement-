@@ -220,8 +220,8 @@ export default function PdfDocument({ type, invoiceNumber, financialYear, dueDat
               {type === "invoice" ? "Tax Invoice" : "Quotation"}
             </div>
             <div style={{ fontSize: "24px", fontWeight: 700, marginTop: "8px", overflowWrap: "anywhere" }}>{invoiceNumber}</div>
-            {type === "invoice" && financialYear ? <div style={{ marginTop: "10px", color: "#334155" }}>FY: {financialYear}</div> : <div style={{ marginTop: "10px", color: "#334155" }}>Due Date: {formatDate(dueDate)}</div>}
-            {type === "invoice" && financialYear ? <div style={{ color: "#334155" }}>Due Date: {formatDate(dueDate)}</div> : null}
+            {financialYear ? <div style={{ marginTop: "10px", color: "#334155" }}>FY: {financialYear}</div> : null}
+            <div style={{ marginTop: financialYear ? "0" : "10px", color: "#334155" }}>Due Date: {formatDate(dueDate)}</div>
             <div style={{ color: "#334155" }}>Tax Mode: {taxType === "igst" ? "IGST 18%" : "CGST 9% + SGST 9%"}</div>
           </div>
         </div>
@@ -290,6 +290,7 @@ export default function PdfDocument({ type, invoiceNumber, financialYear, dueDat
     </div>
   );
 }
+
 
 
 

@@ -16,7 +16,7 @@ import {
   uploadBytesResumable,
 } from "firebase/storage";
 import { assertDatabaseConfigured, assertStorageConfigured } from "./config";
-import { getFinancialYear, getFinancialYearFromInvoiceNumber, getNextInvoiceNumber } from "../utils/invoiceNumbering";
+import { getFinancialYear, getFinancialYearFromDocumentNumber, getFinancialYearFromInvoiceNumber, getNextInvoiceNumber, getNextQuotationNumber } from "../utils/invoiceNumbering";
 
 const PDF_UPLOAD_TIMEOUT_MS = 90000;
 const DATABASE_WRITE_TIMEOUT_MS = 20000;
@@ -97,7 +97,7 @@ function normalizeDocument(type, company, documentKey, documentValue) {
       gstin: documentValue.clientGstin ?? "",
     },
     invoiceNumber: documentValue.invoiceNumber ?? documentValue.quotationNumber ?? "",
-    financialYear: documentValue.financialYear ?? getFinancialYearFromInvoiceNumber(documentValue.invoiceNumber ?? documentValue.quotationNumber ?? ""),
+    financialYear: documentValue.financialYear ?? getFinancialYearFromDocumentNumber(documentValue.invoiceNumber ?? documentValue.quotationNumber ?? ""),
     dueDate: documentValue.dueDate ?? "",
     items,
     subtotal: Number(documentValue.subtotal ?? 0),
@@ -419,8 +419,8 @@ export async function deleteCompany(company) {
   }
 }
 
-function quotationCounterPath() {
-  return "meta/counters/quotation";
+function quotationCounterPath(financialYear) {
+  return `meta/quotationCounters/${financialYear}`;
 }
 
 function invoiceCounterPath(financialYear) {
@@ -435,9 +435,10 @@ export async function peekNextDocumentNumber(type) {
     return getNextInvoiceNumber(value + 1);
   }
 
-  const snapshot = await get(databaseRef(quotationCounterPath()));
+  const financialYear = getFinancialYear();
+  const snapshot = await get(databaseRef(quotationCounterPath(financialYear)));
   const value = snapshot.exists() ? Number(snapshot.val() ?? 0) : 0;
-  return `QTN-${String(value + 1).padStart(6, "0")}`;
+  return getNextQuotationNumber(value + 1);
 }
 
 export async function reserveDocumentNumber(type) {
@@ -456,12 +457,13 @@ export async function reserveDocumentNumber(type) {
     };
   }
 
-  const snapshot = await runTransaction(databaseRef(quotationCounterPath()), (currentValue) => Number(currentValue ?? 0) + 1);
+  const financialYear = getFinancialYear();
+  const snapshot = await runTransaction(databaseRef(quotationCounterPath(financialYear)), (currentValue) => Number(currentValue ?? 0) + 1);
   const next = Number(snapshot.snapshot.val() ?? 1);
 
   return {
-    documentNumber: `QTN-${String(next).padStart(6, "0")}`,
-    financialYear: "",
+    documentNumber: getNextQuotationNumber(next),
+    financialYear,
     sequence: next,
   };
 }
@@ -523,6 +525,7 @@ export async function saveInvoiceRecord(payload) {
     documentData.paymentStatus = Number(payload.balanceAmount ?? 0) > 0 ? "unpaid" : "paid";
   } else {
     documentData.quotationNumber = payload.invoiceNumber;
+    documentData.financialYear = payload.financialYear || getFinancialYearFromDocumentNumber(payload.invoiceNumber);
     documentData.status = payload.status ?? "pending";
   }
 
@@ -585,4 +588,7 @@ export function buildCompanySnapshot(company) {
     logoBase64: company.logoBase64 ?? "",
   };
 }
+
+
+
 

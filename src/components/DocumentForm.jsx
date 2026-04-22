@@ -129,7 +129,7 @@ export default function DocumentForm({ type, companies }) {
     [preparedItems, formData.taxType, formData.paymentMade, type],
   );
 
-  const previewFinancialYear = type === "invoice" ? getFinancialYearFromInvoiceNumber(nextNumber) : "";
+  const previewFinancialYear = getFinancialYearFromInvoiceNumber(nextNumber);
   const exportCompany = pdfCompany ?? selectedCompany;
   const exportLogoSrc = exportCompany?.logoBase64 || exportCompany?.logoUrl || "";
   const exportDocumentNumber = pdfDocumentNumber || nextNumber || "Preview";
@@ -475,3 +475,4 @@ export default function DocumentForm({ type, companies }) {
     </>
   );
 }
+

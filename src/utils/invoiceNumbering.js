@@ -7,12 +7,24 @@ export function getFinancialYear(dateInput = new Date()) {
   return `${startYear}-${endYearShort}`;
 }
 
-export function getNextInvoiceNumber(sequence, dateInput = new Date()) {
+export function getNextDocumentNumber(prefix, sequence, dateInput = new Date()) {
   const financialYear = getFinancialYear(dateInput);
-  return `INV/${financialYear}/${String(sequence).padStart(3, "0")}`;
+  return `${prefix}/${financialYear}/${String(sequence).padStart(3, "0")}`;
+}
+
+export function getNextInvoiceNumber(sequence, dateInput = new Date()) {
+  return getNextDocumentNumber("INV", sequence, dateInput);
+}
+
+export function getNextQuotationNumber(sequence, dateInput = new Date()) {
+  return getNextDocumentNumber("QTN", sequence, dateInput);
+}
+
+export function getFinancialYearFromDocumentNumber(documentNumber = "") {
+  const match = /^(INV|QTN)\/(\d{4}-\d{2})\/(\d{3,})$/.exec(documentNumber);
+  return match?.[2] ?? "";
 }
 
 export function getFinancialYearFromInvoiceNumber(invoiceNumber = "") {
-  const match = /^INV\/(\d{4}-\d{2})\/(\d{3,})$/.exec(invoiceNumber);
-  return match?.[1] ?? "";
+  return getFinancialYearFromDocumentNumber(invoiceNumber);
 }
