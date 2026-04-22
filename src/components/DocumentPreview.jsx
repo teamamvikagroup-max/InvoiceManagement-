@@ -117,12 +117,12 @@ export default function DocumentPreview({ type, invoiceNumber, financialYear, du
           <p className="mt-3 whitespace-pre-line break-words text-sm leading-6 text-slate-600">{notes || "-"}</p>
         </div>
         <div className="w-1/2 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 min-h-[96px]">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Reference</p>
         </div>
       </div>
     </div>
   );
 }
+
 
 
 

@@ -285,12 +285,12 @@ export default function PdfDocument({ type, invoiceNumber, financialYear, dueDat
           <div style={{ marginTop: "8px", whiteSpace: "pre-line", color: "#475569", overflowWrap: "anywhere" }}>{notes || "-"}</div>
         </div>
         <div style={{ ...styles.secondaryCard, width: "50%", minHeight: "96px" }}>
-          <div style={styles.label}>Reference</div>
         </div>
       </div>
     </div>
   );
 }
+
 
 
 
