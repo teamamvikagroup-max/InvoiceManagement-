@@ -62,6 +62,11 @@ function splitLines(pdf, text, width, fontSize = 10) {
   return pdf.splitTextToSize(String(text || "-"), width);
 }
 
+function formatPdfCurrency(value) {
+  const formatted = formatCurrency(value);
+  return /^[^0-9-]+/.test(formatted) ? formatted.replace(/^[^0-9-]+\s*/, "Rs. ") : `Rs. ${formatted}`;
+}
+
 function getImageFormat(dataUrl) {
   if (dataUrl?.startsWith("data:image/jpeg") || dataUrl?.startsWith("data:image/jpg")) {
     return "JPEG";
@@ -250,8 +255,8 @@ function drawItemsTable(pdf, payload, startY) {
       description: splitLines(pdf, safeValue(item.description), TABLE_COLUMNS[0].width - 18, 10),
       hsnCode: splitLines(pdf, safeValue(item.hsnCode), TABLE_COLUMNS[1].width - 18, 10),
       quantity: [String(item.quantity ?? 0)],
-      rate: [formatCurrency(item.rate)],
-      total: [formatCurrency(item.total)],
+      rate: [formatPdfCurrency(item.rate)],
+      total: [formatPdfCurrency(item.total)],
     };
 
     const contentHeights = Object.values(cells).map((lines) => Math.max(lines.length, 1) * 12);
@@ -323,15 +328,15 @@ function drawSummarySection(pdf, payload, startY) {
 
   drawRoundedCard(pdf, rightX, y, rightWidth, rightHeight, { fillColor: [248, 250, 252] });
   const rows = [
-    ["Subtotal", formatCurrency(payload.totals.subtotal)],
-    ["CGST", formatCurrency(payload.totals.cgst)],
-    ["SGST", formatCurrency(payload.totals.sgst)],
-    ["IGST", formatCurrency(payload.totals.igst)],
-    ["Total", formatCurrency(payload.totals.totalAmount)],
+    ["Subtotal", formatPdfCurrency(payload.totals.subtotal)],
+    ["CGST", formatPdfCurrency(payload.totals.cgst)],
+    ["SGST", formatPdfCurrency(payload.totals.sgst)],
+    ["IGST", formatPdfCurrency(payload.totals.igst)],
+    ["Total", formatPdfCurrency(payload.totals.totalAmount)],
   ];
   if (payload.type === "invoice") {
-    rows.push(["Payment Made", formatCurrency(payload.totals.paymentMade)]);
-    rows.push(["Balance Amount", formatCurrency(payload.totals.balanceAmount)]);
+    rows.push(["Payment Made", formatPdfCurrency(payload.totals.paymentMade)]);
+    rows.push(["Balance Amount", formatPdfCurrency(payload.totals.balanceAmount)]);
   }
 
   let rowY = y + 12;
@@ -402,3 +407,5 @@ export function generatePdfBlob(payload, filename) {
 
   return pdf.output("blob");
 }
+
+
