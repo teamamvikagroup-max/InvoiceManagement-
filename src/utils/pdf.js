@@ -297,8 +297,8 @@ function drawSummarySection(pdf, payload, startY) {
   const wordsLines = splitLines(pdf, formatAmountInWordsEnglish(payload.totals.totalAmount), leftWidth - 24, 11);
   const termsLines = splitLines(pdf, safeValue(payload.terms), leftWidth - 24, 10);
   const leftHeight = Math.max(120, 24 + wordsLines.length * 14 + 26 + 18 + termsLines.length * 12 + 16);
-  const totalsRows = payload.type === "invoice" ? 6 : 4;
-  const rightHeight = totalsRows * 28 + 20;
+  const totalsRows = payload.type === "invoice" ? 7 : 5;
+  const rightHeight = totalsRows * 28 + 24;
   const sectionHeight = Math.max(leftHeight, rightHeight);
   const y = ensurePageSpace(pdf, startY, sectionHeight + 18);
 
@@ -407,5 +407,6 @@ export function generatePdfBlob(payload, filename) {
 
   return pdf.output("blob");
 }
+
 
 
