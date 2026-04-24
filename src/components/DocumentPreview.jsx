@@ -5,6 +5,22 @@ function headingClass(value, baseClass, compactClass) {
   return `${value && value.length > 28 ? compactClass : baseClass} break-words`;
 }
 
+function documentNumberClass(value) {
+  if (!value) {
+    return "mt-3 text-2xl font-semibold leading-tight text-slate-900 break-words";
+  }
+
+  if (value.length > 16) {
+    return "mt-3 text-[1.4rem] font-semibold leading-tight text-slate-900 break-words";
+  }
+
+  if (value.length > 13) {
+    return "mt-3 text-[1.65rem] font-semibold leading-tight text-slate-900 break-words";
+  }
+
+  return "mt-3 text-2xl font-semibold leading-tight text-slate-900 break-words";
+}
+
 export default function DocumentPreview({ type, invoiceNumber, financialYear, dueDate, company, customer, items, totals, notes, terms, taxType }) {
   const englishAmountInWords = formatAmountInWordsEnglish(totals.totalAmount);
   const logoSrc = company?.logoUrl || company?.logoBase64 || "";
@@ -51,7 +67,7 @@ export default function DocumentPreview({ type, invoiceNumber, financialYear, du
         <div className="w-[236px] flex-shrink-0">
           <div className="mt-[14px] rounded-2xl border border-indigo-100 bg-gradient-to-b from-indigo-50 to-indigo-100/80 px-6 py-5 shadow-[0_14px_28px_rgba(99,102,241,0.12)]">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">{type === "invoice" ? "Tax Invoice" : "Quotation"}</p>
-            <p className="mt-3 break-words text-2xl font-semibold text-slate-900">{invoiceNumber}</p>
+            <p className={documentNumberClass(invoiceNumber)}>{invoiceNumber}</p>
             <div className="mt-4 space-y-2 text-sm text-slate-700">
               {financialYear ? <p>FY: {financialYear}</p> : null}
               <p>Due Date: {formatDate(dueDate)}</p>
@@ -122,8 +138,3 @@ export default function DocumentPreview({ type, invoiceNumber, financialYear, du
     </div>
   );
 }
-
-
-
-
-
