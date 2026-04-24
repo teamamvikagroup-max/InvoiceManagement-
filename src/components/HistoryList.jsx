@@ -36,7 +36,7 @@ export default function HistoryList({ type, records, isLoading }) {
   const handleDownload = async (record) => {
     try {
       setDownloadingId(record.id);
-      downloadPdfUrl(record.pdfUrl, `${record.invoiceNumber}.pdf`);
+      await downloadPdfUrl(record.pdfUrl, `${record.invoiceNumber}.pdf`);
     } catch (error) {
       console.error("Unable to download PDF from history record", error);
       window.alert("Unable to download the PDF right now. Please try again.");

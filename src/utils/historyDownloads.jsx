@@ -6,19 +6,39 @@ export function openPdfUrl(url) {
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
-export function downloadPdfUrl(url, filename) {
+export async function downloadPdfUrl(url, filename) {
   if (!url) {
     throw new Error("PDF URL is not available for this record.");
   }
 
-  const link = document.createElement("a");
-  link.href = url;
-  link.target = "_blank";
-  link.rel = "noreferrer";
-  link.download = filename || "document.pdf";
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
+  try {
+    const response = await fetch(url, { mode: "cors" });
+    if (!response.ok) {
+      throw new Error(`Unable to fetch PDF. Status: ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = filename || "document.pdf";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    return;
+  } catch (error) {
+    console.warn("Falling back to direct PDF URL download", error);
+  }
+
+  const fallbackLink = document.createElement("a");
+  fallbackLink.href = url;
+  fallbackLink.target = "_blank";
+  fallbackLink.rel = "noreferrer noopener";
+  fallbackLink.download = filename || "document.pdf";
+  document.body.appendChild(fallbackLink);
+  fallbackLink.click();
+  fallbackLink.remove();
 }
 
 function buildZipFilename(type, label) {
