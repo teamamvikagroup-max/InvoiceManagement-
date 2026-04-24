@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { formatCurrency } from "../utils/calculations";
 import { formatDate, formatTimestamp } from "../utils/formatters";
-import { downloadPdfUrl } from "../utils/historyDownloads";
+import { openPdfUrl } from "../utils/historyDownloads";
 import EmptyState from "./EmptyState";
 
 const STALLED_UPLOAD_MS = 60000;
@@ -11,7 +11,7 @@ function HistoryAction({ type, record, uploadLooksStalled, isDownloading, onDown
     return (
       <div className="flex w-full flex-col gap-3 sm:flex-row xl:justify-end">
         <button type="button" onClick={onDownload} disabled={isDownloading} className="btn-primary w-full sm:w-auto">
-          {isDownloading ? `Downloading ${type === "invoice" ? "invoice" : "quotation"}...` : type === "invoice" ? "Download Invoice" : "Download Quotation"}
+          {isDownloading ? `Opening ${type === "invoice" ? "invoice" : "quotation"}...` : type === "invoice" ? "Open Invoice" : "Open Quotation"}
         </button>
       </div>
     );
@@ -36,10 +36,10 @@ export default function HistoryList({ type, records, isLoading }) {
   const handleDownload = async (record) => {
     try {
       setDownloadingId(record.id);
-      await downloadPdfUrl(record.pdfUrl, `${record.invoiceNumber}.pdf`);
+      openPdfUrl(record.pdfUrl);
     } catch (error) {
-      console.error("Unable to download PDF from history record", error);
-      window.alert("Unable to download the PDF right now. Please try again.");
+      console.error("Unable to open PDF from history record", error);
+      window.alert("Unable to open the PDF right now. Please try again.");
     } finally {
       setDownloadingId("");
     }
