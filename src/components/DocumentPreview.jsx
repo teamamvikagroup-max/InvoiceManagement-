@@ -5,8 +5,13 @@ function headingClass(value, baseClass, compactClass) {
   return `${value && value.length > 28 ? compactClass : baseClass} break-words`;
 }
 
+const documentNumberStyle = {
+  fontSize: "clamp(14px, 1.5vw, 20px)",
+  wordBreak: "keep-all",
+};
+
 function documentNumberClass() {
-  return "mt-3 max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-semibold leading-tight text-slate-900 text-[clamp(1.35rem,2.6vw,2rem)]";
+  return "mt-3 max-w-full overflow-hidden text-ellipsis whitespace-nowrap font-semibold leading-tight text-slate-900";
 }
 
 export default function DocumentPreview({ type, invoiceNumber, financialYear, dueDate, company, customer, items, totals, notes, terms, taxType }) {
@@ -52,10 +57,10 @@ export default function DocumentPreview({ type, invoiceNumber, financialYear, du
           </div>
         </div>
 
-        <div className="w-[248px] max-w-[248px] flex-shrink-0">
+        <div className="w-[260px] max-w-[260px] flex-shrink-0">
           <div className="mt-[14px] rounded-2xl border border-indigo-100 bg-gradient-to-b from-indigo-50 to-indigo-100/80 px-6 py-5 shadow-[0_14px_28px_rgba(99,102,241,0.12)]">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-700">{type === "invoice" ? "Tax Invoice" : "Quotation"}</p>
-                        <p className={documentNumberClass()} title={invoiceNumber}>{invoiceNumber}</p>
+            <p className={documentNumberClass()} style={documentNumberStyle} title={invoiceNumber}>{invoiceNumber}</p>
             <div className="mt-4 space-y-2 text-sm text-slate-700">
               {financialYear ? <p>FY: {financialYear}</p> : null}
               <p>Due Date: {formatDate(dueDate)}</p>
@@ -126,4 +131,3 @@ export default function DocumentPreview({ type, invoiceNumber, financialYear, du
     </div>
   );
 }
-

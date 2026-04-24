@@ -93,7 +93,7 @@ function drawFooter(pdf) {
 function drawHeader(pdf, payload) {
   const { type, invoiceNumber, dueDate, company, taxType, logoDataUrl } = payload;
   const leftX = PAGE_MARGIN;
-  const rightBoxWidth = 182;
+  const rightBoxWidth = 194;
   const rightX = PAGE_WIDTH - PAGE_MARGIN - rightBoxWidth;
   const companyMaxWidth = rightX - leftX - 22;
   let companyY = PAGE_MARGIN;
@@ -407,6 +407,7 @@ export function generatePdfBlob(payload, filename) {
 
   return pdf.output("blob");
 }
+
 
 
 
